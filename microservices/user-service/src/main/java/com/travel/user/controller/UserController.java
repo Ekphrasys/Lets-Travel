@@ -85,6 +85,7 @@ public class UserController {
     }
 
     @PostMapping("/reports")
+    @ResponseStatus(HttpStatus.CREATED)
     public ReportResponse report(@Valid @RequestBody CreateReportRequest request, Authentication authentication) {
         UUID reporterId = UUID.fromString(authentication.getName());
         return userService.createReport(reporterId, request);
@@ -105,5 +106,10 @@ public class UserController {
     @GetMapping("/{id}/report-counts")
     public ReportCountsResponse getReportCounts(@PathVariable UUID id) {
         return userService.getReportCounts(id);
+    }
+
+    @GetMapping("/{id}/stats")
+    public UserStatsResponse getUserStats(@PathVariable UUID id) {
+        return userService.getUserStats(id);
     }
 }

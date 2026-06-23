@@ -18,10 +18,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
-    public UserService(UserRepository userRepository, ReportRepository reportRepository) {
+    public UserService(
+            UserRepository userRepository,
+            ReportRepository reportRepository,
+            jakarta.persistence.EntityManager entityManager
+    ) {
         this.userRepository = userRepository;
         this.reportRepository = reportRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -120,6 +126,56 @@ public class UserService {
         long filed = reportRepository.countByReporterId(userId);
         long received = reportRepository.countByReportedId(userId);
         return new ReportCountsResponse(filed, received);
+    }
+
+    @Transactional(readOnly = true)
+    public UserStatsResponse getUserStats(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable");
+        }
+
+        long pastTravelParticipation = 0;
+        try {
+            Number count = (Number) entityManager.createNativeQuery(
+                    "SELECT COUNT(*) FROM travel.bookings WHERE user_id = :userId AND status = 'CONFIRMED'"
+            ).setParameter("userId", userId).getSingleResult();
+            pastTravelParticipation = count.longValue();
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        long subscriptionCancellations = 0;
+        try {
+            Number count = (Number) entityManager.createNativeQuery(
+                    "SELECT COUNT(*) FROM travel.bookings WHERE user_id = :userId AND status = 'CANCELLED'"
+            ).setParameter("userId", userId).getSingleResult();
+            subscriptionCancellations = count.longValue();
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        long reportsFiled = reportRepository.countByReporterId(userId);
+        long reportsReceived = reportRepository.countByReportedId(userId);
+
+        String preferredPaymentMethod = "Aucun";
+        try {
+            List<?> resultList = entityManager.createNativeQuery(
+                    "SELECT payment_method FROM payment.payments WHERE user_id = :userId AND status = 'COMPLETED' GROUP BY payment_method ORDER BY COUNT(*) DESC LIMIT 1"
+            ).setParameter("userId", userId).getResultList();
+            if (!resultList.isEmpty()) {
+                preferredPaymentMethod = resultList.get(0).toString();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        return new UserStatsResponse(
+                pastTravelParticipation,
+                reportsFiled,
+                reportsReceived,
+                subscriptionCancellations,
+                preferredPaymentMethod
+        );
     }
 
     private ReportResponse toReportResponse(Report report) {

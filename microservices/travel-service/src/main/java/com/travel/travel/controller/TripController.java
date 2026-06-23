@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -127,6 +128,7 @@ public class TripController {
     }
 
     @PostMapping("/{id}/feedback")
+    @Transactional
     public FeedbackResponse leaveFeedback(
             @PathVariable UUID id,
             @Valid @RequestBody FeedbackRequest request,
@@ -185,6 +187,7 @@ public class TripController {
 
     @GetMapping("/admin/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
     public AdminDashboardResponse adminDashboard() {
         List<Trip> allTrips = tripService.getAllTripEntities();
         List<com.travel.travel.model.Booking> allBookings = bookingRepository.findAll();
@@ -269,6 +272,7 @@ public class TripController {
     }
 
     @GetMapping("/managers/{managerId}/dashboard")
+    @Transactional(readOnly = true)
     public ManagerDashboardResponse managerDashboard(@PathVariable UUID managerId) {
         List<Trip> mTrips = tripService.getAllTripEntities().stream()
                 .filter(t -> managerId.equals(t.getManagerId()))
@@ -303,6 +307,7 @@ public class TripController {
     }
 
     @GetMapping("/{id}/subscribers")
+    @Transactional(readOnly = true)
     public List<UserServiceClient.UserProfile> getSubscribers(@PathVariable UUID id, Authentication authentication) {
         Trip trip = tripService.getTripEntity(id);
         UUID currentUserId = UUID.fromString(authentication.getName());

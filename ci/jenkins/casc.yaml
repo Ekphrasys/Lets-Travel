@@ -63,7 +63,7 @@ jobs:
             scm {
               git {
                 remote {
-                  url('https://zone01normandie.org/git/ajoly/travel-plan.git')
+                  url('${GIT_REMOTE}')
                   credentials('git-travel-repo')
                 }
                 branches('*/master')
