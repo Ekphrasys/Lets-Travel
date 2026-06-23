@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "module": "es2022",
+    "moduleResolution": "bundler"
+  }
+}

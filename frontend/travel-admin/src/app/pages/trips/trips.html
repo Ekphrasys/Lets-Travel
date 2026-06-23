@@ -1,0 +1,35 @@
+<div class="page">
+  <div class="header">
+    <h1>Catalogue voyages</h1>
+    @if (auth.isAdmin()) {
+      <a routerLink="/trips/new" class="btn-primary">+ Nouveau voyage</a>
+    }
+  </div>
+
+  @if (message()) {
+    <p class="message">{{ message() }}</p>
+  }
+
+  <div class="trip-grid">
+    @for (trip of trips(); track trip.id) {
+      <div class="trip-card">
+        <h3>{{ trip.title }}</h3>
+        <p class="route">{{ trip.originCity }} → {{ trip.destinationCity }}</p>
+        <p class="date">{{ trip.departureDate | date:'longDate' }}</p>
+        <p class="price">{{ trip.price | currency:'EUR' }}</p>
+        <p class="seats">{{ trip.seatsAvailable }} places · {{ trip.status }}</p>
+        <div class="actions">
+          @if (auth.isAuthenticated() && trip.seatsAvailable > 0 && trip.status === 'ACTIVE') {
+            <button (click)="book(trip.id)">Réserver</button>
+          }
+          @if (auth.isAdmin()) {
+            <a [routerLink]="['/trips', trip.id, 'edit']" class="btn-edit">Modifier</a>
+            <button class="btn-danger" (click)="deleteTrip(trip.id)">Supprimer</button>
+          }
+        </div>
+      </div>
+    } @empty {
+      <p>Aucun voyage disponible.</p>
+    }
+  </div>
+</div>

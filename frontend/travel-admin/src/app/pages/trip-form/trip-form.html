@@ -1,0 +1,17 @@
+<div class="page">
+  <h1>{{ isEdit ? 'Modifier' : 'Créer' }} un voyage</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form-card">
+    <label>Titre <input formControlName="title" /></label>
+    <label>Ville départ <input formControlName="originCity" /></label>
+    <label>Ville arrivée <input formControlName="destinationCity" /></label>
+    <label>Date départ <input type="date" formControlName="departureDate" /></label>
+    <label>Prix (€) <input type="number" formControlName="price" step="0.01" /></label>
+    <label>Places <input type="number" formControlName="seatsAvailable" /></label>
+
+    <div class="actions">
+      <button type="submit" [disabled]="form.invalid">{{ isEdit ? 'Enregistrer' : 'Créer' }}</button>
+      <a routerLink="/trips" class="cancel">Annuler</a>
+    </div>
+  </form>
+</div>

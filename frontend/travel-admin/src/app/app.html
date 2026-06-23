@@ -1,0 +1,28 @@
+@if (auth.isAuthenticated()) {
+  <nav class="navbar">
+    <a routerLink="/" class="logo">✈️ Travel Admin</a>
+
+    <button class="menu-toggle" (click)="toggleMenu()" aria-label="Menu">☰</button>
+
+    <div class="nav-links" [class.open]="menuOpen()">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/trips" routerLinkActive="active">Voyages</a>
+      <a routerLink="/bookings" routerLinkActive="active">Réservations</a>
+      <a routerLink="/routes" routerLinkActive="active">Itinéraires</a>
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin/users" routerLinkActive="active">Utilisateurs</a>
+        <a routerLink="/admin/payments" routerLinkActive="active">Paiements</a>
+      }
+      <div class="nav-user">
+        @if (auth.currentUser(); as user) {
+          <span>{{ user.email }}</span>
+        }
+        <button (click)="auth.logout()">Déconnexion</button>
+      </div>
+    </div>
+  </nav>
+}
+
+<main class="main">
+  <router-outlet />
+</main>

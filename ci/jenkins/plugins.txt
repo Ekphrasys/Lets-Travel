@@ -1,0 +1,23 @@
+# Jenkins plugins — CI/CD + SonarQube (audit)
+workflow-aggregator
+git
+github
+gitea
+credentials-binding
+pipeline-stage-view
+timestamper
+ws-cleanup
+
+# Build tools
+maven-plugin
+jdk-tool
+nodejs
+
+# SonarQube + config as code
+sonar
+configuration-as-code
+job-dsl
+
+# Docker deploy
+docker-workflow
+docker-plugin

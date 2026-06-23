@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Travel Service API
+  description: Voyages, itinéraires Neo4j, réservations
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/travels:
+    get:
+      summary: Catalogue voyages (public)
+      tags: [Trips]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TripResponse'
+
+    post:
+      summary: Créer un voyage (ADMIN)
+      tags: [Trips]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+
+  /api/travels/{id}:
+    put:
+      summary: Modifier (ADMIN)
+      tags: [Trips]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+
+    delete:
+      summary: Supprimer (ADMIN)
+      tags: [Trips]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Supprimé
+
+  /api/travels/routes/search:
+    get:
+      summary: Recherche itinéraire Neo4j (public)
+      tags: [Routes]
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouteResponse'
+
+  /api/bookings:
+    post:
+      summary: Réserver un voyage
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tripId]
+              properties:
+                tripId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '422':
+          description: Plus de places ou paiement refusé
+
+  /api/bookings/me:
+    get:
+      summary: Mes réservations
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingResponse'
+
+  /api/bookings/{id}:
+    delete:
+      summary: Annuler
+      tags: [Bookings]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TripResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        originCity:
+          type: string
+        destinationCity:
+          type: string
+        departureDate:
+          type: string
+          format: date
+        price:
+          type: number
+        seatsAvailable:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, CANCELLED]
+
+    CreateTripRequest:
+      type: object
+      required: [title, originCity, destinationCity, departureDate, price, seatsAvailable]
+      properties:
+        title:
+          type: string
+        originCity:
+          type: string
+        destinationCity:
+          type: string
+        departureDate:
+          type: string
+          format: date
+        price:
+          type: number
+        seatsAvailable:
+          type: integer
+
+    RouteResponse:
+      type: object
+      properties:
+        cities:
+          type: array
+          items:
+            type: string
+        totalDurationMin:
+          type: integer
+        totalPrice:
+          type: number
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tripId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED]
+        paymentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time

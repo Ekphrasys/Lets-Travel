@@ -1,0 +1,35 @@
+<div class="page">
+  <h1>Mes réservations</h1>
+
+  @if (message()) {
+    <p class="message">{{ message() }}</p>
+  }
+
+  <table>
+    <caption>Mes réservations</caption>
+    <thead>
+      <tr>
+        <th>Voyage ID</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (b of bookings(); track b.id) {
+        <tr>
+          <td>{{ b.tripId }}</td>
+          <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
+          <td>{{ b.createdAt | date:'short' }}</td>
+          <td>
+            @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
+              <button (click)="cancel(b.id)">Annuler</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="4">Aucune réservation.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

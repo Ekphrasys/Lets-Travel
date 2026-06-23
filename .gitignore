@@ -1,0 +1,13 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.env
+*.p12
+!microservices/gateway-service/src/main/resources/travel.p12
+.idea/
+*.iml
+.vscode/
+.DS_Store
+jenkins_home/
+.scannerwork/
+frontend/travel-admin/coverage/
+.env.ci

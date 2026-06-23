@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:auth;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: auth
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: travel-jwt-secret-key-minimum-32-characters-long

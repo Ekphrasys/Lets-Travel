@@ -1,0 +1,21 @@
+<div class="page">
+  <h1>{{ isEdit ? 'Modifier paiement' : 'Nouveau paiement' }}</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    @if (!isEdit) {
+      <label>Booking ID <input formControlName="bookingId" /></label>
+      <label>User ID <input formControlName="userId" /></label>
+    }
+    <label>Montant <input type="number" step="0.01" formControlName="amount" /></label>
+    <label>Statut
+      <select formControlName="status">
+        <option value="COMPLETED">COMPLETED</option>
+        <option value="FAILED">FAILED</option>
+        <option value="REFUNDED">REFUNDED</option>
+      </select>
+    </label>
+    <div class="actions">
+      <button type="submit">{{ isEdit ? 'Enregistrer' : 'Créer' }}</button>
+      <a routerLink="/admin/payments">Annuler</a>
+    </div>
+  </form>
+</div>

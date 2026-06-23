@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/travel_db?currentSchema=payment
+    username: ${POSTGRES_USER:travel}
+    password: ${POSTGRES_PASSWORD:travel_secret}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka/}
+
+jwt:
+  secret: ${JWT_SECRET:travel-jwt-secret-key-minimum-32-characters-long}
+
+internal:
+  api-key: ${INTERNAL_API_KEY:travel-internal-api-key-change-me}

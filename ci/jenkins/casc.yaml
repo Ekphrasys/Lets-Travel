@@ -1,0 +1,82 @@
+jenkins:
+  systemMessage: "Travel Management System — CI/CD (audit)"
+  numExecutors: 2
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: "sonar-token"
+              secret: "${SONAR_TOKEN}"
+              description: "SonarQube token (généré par scripts/setup-sonarqube.sh)"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "git-travel-repo"
+              username: "${GIT_USERNAME}"
+              password: "${GIT_TOKEN}"
+              description: "Gitea travel-plan (scripts/setup-jenkins-git.sh)"
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+  jdk:
+    installations:
+      - name: "jdk-17"
+        home: "/opt/java/openjdk"
+  maven:
+    installations:
+      - name: "maven-3"
+        home: "/opt/maven"
+  nodejs:
+    installations:
+      - name: "node-22"
+        home: "/opt/node"
+  sonarRunnerInstallation:
+    installations:
+      - name: "sonar-scanner"
+        home: "/opt/sonar-scanner"
+
+unclassified:
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: "sonar-server"
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: "sonar-token"
+        triggers:
+          skipScmCause: false
+          skipUpstreamCause: false
+
+jobs:
+  - script: >
+      pipelineJob('travel') {
+        description('Pipeline Travel — build, tests, SonarQube, deploy (branche master)')
+        triggers {
+          scm('H/5 * * * *')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://zone01normandie.org/git/ajoly/travel-plan.git')
+                  credentials('git-travel-repo')
+                }
+                branches('*/master')
+                extensions {
+                  cleanBeforeCheckout()
+                  cloneOptions {
+                    depth(1)
+                    shallow(true)
+                  }
+                }
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+      }

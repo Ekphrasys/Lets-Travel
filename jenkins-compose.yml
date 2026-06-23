@@ -1,0 +1,73 @@
+name: travel-ci
+
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: travel-sonar
+    ports:
+      - "9002:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+    networks:
+      - travel-ci
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/api/system/status | grep -q UP"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  jenkins:
+    build: .
+    container_name: travel-jenkins
+    user: root
+    privileged: true
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    ports:
+      - "9092:8080"
+      - "50001:50000"
+    environment:
+      CASC_JENKINS_CONFIG: /var/jenkins_config/casc.yaml
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin123}
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    env_file:
+      - path: .env.ci
+        required: false
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - ./ci/jenkins/casc.yaml:/var/jenkins_config/casc.yaml:ro
+      - type: bind
+        source: ./.env
+        target: /var/jenkins_home/deploy-config/.env
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./.env.ci
+        target: /var/jenkins_home/deploy-config/.env.ci
+        read_only: true
+        bind:
+          create_host_path: true
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/libexec/docker/cli-plugins:/usr/libexec/docker/cli-plugins:ro
+    networks:
+      - travel-ci
+
+networks:
+  travel-ci:
+    driver: bridge
+
+volumes:
+  sonar_data:
+    name: travel_sonar_data
+  sonar_extensions:
+    name: travel_sonar_extensions
+  sonar_logs:
+    name: travel_sonar_logs

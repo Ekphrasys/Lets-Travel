@@ -1,0 +1,33 @@
+---
+# Déploiement de la stack Travel via Docker Compose
+- name: Travel — déploiement Docker
+  hosts: travel_hosts
+  gather_facts: false
+
+  tasks:
+    - name: Résoudre le chemin absolu du projet
+      ansible.builtin.set_fact:
+        project_root_abs: "{{ (playbook_dir + '/../..') | realpath }}"
+        env_file_abs: "{{ (playbook_dir + '/../../.env') | realpath }}"
+
+    - name: Vérifier le fichier .env
+      ansible.builtin.stat:
+        path: "{{ env_file_abs }}"
+      register: env_stat
+
+    - name: Échec si .env absent
+      ansible.builtin.fail:
+        msg: "Créez {{ env_file_abs }} depuis .env.example avant le déploiement."
+      when: not env_stat.stat.exists
+
+    - name: Déployer la stack microservices
+      ansible.builtin.shell: "bash scripts/deploy-stack.sh"
+      args:
+        chdir: "{{ project_root_abs }}"
+      environment:
+        DEPLOY_ENV_FILE: "{{ env_file_abs }}"
+      register: compose_up
+
+    - name: Stack déployée
+      ansible.builtin.debug:
+        msg: "App UP — https://localhost:4200 | API — https://localhost:8080"

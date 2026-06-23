@@ -1,0 +1,202 @@
+name: travel
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: travel-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-travel_db}
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-travel} -d ${POSTGRES_DB:-travel_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5
+    container_name: travel-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-neo4j_secret}
+    volumes:
+      - neo4j-data:/data
+      - ./neo4j/seed.cypher:/seed.cypher:ro
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  neo4j-seed:
+    image: neo4j:5
+    container_name: travel-neo4j-seed
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./neo4j/seed.cypher:/seed.cypher:ro
+    networks:
+      - travel-network
+    entrypoint: >
+      cypher-shell
+      -a bolt://neo4j:7687
+      -u neo4j
+      -p ${NEO4J_PASSWORD:-neo4j_secret}
+      -f /seed.cypher
+    restart: "no"
+
+  discovery-service:
+    build: ../microservices/discovery-service
+    container_name: travel-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  gateway-service:
+    build: ../microservices/gateway-service
+    container_name: travel-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SSL_KEYSTORE_PASSWORD: ${SSL_KEYSTORE_PASSWORD:-password}
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      travel-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --no-check-certificate https://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  user-service:
+    build: ../microservices/user-service
+    container_name: travel-user
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
+      JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - travel-network
+
+  auth-service:
+    build: ../microservices/auth-service
+    container_name: travel-auth
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
+      JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    networks:
+      - travel-network
+
+  payment-service:
+    build: ../microservices/payment-service
+    container_name: travel-payment
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
+      JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - travel-network
+
+  travel-service:
+    build: ../microservices/travel-service
+    container_name: travel-app
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-neo4j_secret}
+      JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_started
+    networks:
+      - travel-network
+
+  travel-admin:
+    build: ../frontend/travel-admin
+    container_name: travel-admin
+    ports:
+      - "4200:4200"
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sfk https://localhost:4200/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+networks:
+  travel-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  neo4j-data:

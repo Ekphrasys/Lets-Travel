@@ -1,0 +1,32 @@
+<div class="page">
+  <h1>Tableau de bord</h1>
+  <p class="welcome">
+    Bonjour
+    @if (auth.currentUser(); as user) {
+      <strong>{{ user.email }}</strong>
+      <span class="badge">{{ user.role }}</span>
+    }
+  </p>
+
+  <div class="stats">
+    <div class="stat-card">
+      <span class="stat-value">{{ trips().length }}</span>
+      <span class="stat-label">Voyages disponibles</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ bookings().length }}</span>
+      <span class="stat-label">Mes réservations</span>
+    </div>
+  </div>
+
+  <div class="quick-links">
+    <a routerLink="/trips" class="card-link">✈️ Catalogue voyages</a>
+    <a routerLink="/bookings" class="card-link">📋 Mes réservations</a>
+    <a routerLink="/routes" class="card-link">🗺️ Recherche itinéraires</a>
+    @if (auth.isAdmin()) {
+      <a routerLink="/admin/users" class="card-link admin">👥 Utilisateurs</a>
+      <a routerLink="/admin/payments" class="card-link admin">💳 Paiements</a>
+      <a routerLink="/trips/new" class="card-link admin">➕ Nouveau voyage</a>
+    }
+  </div>
+</div>

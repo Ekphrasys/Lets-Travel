@@ -1,0 +1,44 @@
+---
+# Prérequis système pour Travel (SonarQube + Docker)
+- name: Travel — prérequis système
+  hosts: travel_hosts
+  gather_facts: true
+
+  tasks:
+    - name: Lire vm.max_map_count actuel
+      ansible.builtin.command: sysctl -n vm.max_map_count
+      register: current_max_map_count
+      changed_when: false
+
+    - name: Configurer vm.max_map_count pour SonarQube (nécessite sudo si < 262144)
+      ansible.posix.sysctl:
+        name: vm.max_map_count
+        value: "262144"
+        state: present
+        sysctl_set: true
+        reload: true
+      become: true
+      when: current_max_map_count.stdout | int < 262144
+
+    - name: vm.max_map_count déjà configuré
+      ansible.builtin.debug:
+        msg: "vm.max_map_count = {{ current_max_map_count.stdout }} (requis : 262144) — OK"
+      when: current_max_map_count.stdout | int >= 262144
+
+    - name: Vérifier que Docker est installé
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Afficher version Docker
+      ansible.builtin.debug:
+        msg: "{{ docker_version.stdout }}"
+
+    - name: Vérifier que Docker Compose est disponible
+      ansible.builtin.command: docker compose version
+      register: compose_version
+      changed_when: false
+
+    - name: Afficher version Docker Compose
+      ansible.builtin.debug:
+        msg: "{{ compose_version.stdout }}"

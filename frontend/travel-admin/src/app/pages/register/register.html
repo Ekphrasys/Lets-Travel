@@ -1,0 +1,21 @@
+<div class="auth-card">
+  <h1>Travel Admin</h1>
+  <p class="subtitle">Inscription</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label>Prénom <input formControlName="firstName" /></label>
+    <label>Nom <input formControlName="lastName" /></label>
+    <label>Email <input type="email" formControlName="email" /></label>
+    <label>Mot de passe (8+ chars) <input type="password" formControlName="password" /></label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button type="submit" [disabled]="loading() || form.invalid">
+      {{ loading() ? 'Inscription...' : "S'inscrire" }}
+    </button>
+  </form>
+
+  <p class="link">Déjà un compte ? <a routerLink="/login">Se connecter</a></p>
+</div>

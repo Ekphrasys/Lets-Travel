@@ -1,0 +1,36 @@
+<div class="page">
+  <div class="header">
+    <h1>Paiements</h1>
+    <a routerLink="/admin/payments/new">+ Nouveau paiement</a>
+  </div>
+  <table>
+    <caption>Liste des paiements</caption>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Booking</th>
+        <th>Montant</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of payments(); track p.id) {
+        <tr>
+          <td>{{ p.id | slice:0:8 }}…</td>
+          <td>{{ p.bookingId | slice:0:8 }}…</td>
+          <td>{{ p.amount | currency:'EUR' }}</td>
+          <td><span class="status" [class]="p.status.toLowerCase()">{{ p.status }}</span></td>
+          <td>{{ p.createdAt | date:'short' }}</td>
+          <td class="actions">
+            <a [routerLink]="['/admin/payments', p.id, 'edit']">Modifier</a>
+            <button (click)="deletePayment(p.id)">Supprimer</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6">Aucun paiement.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

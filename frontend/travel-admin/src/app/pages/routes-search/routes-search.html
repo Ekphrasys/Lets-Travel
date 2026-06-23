@@ -1,0 +1,23 @@
+<div class="page">
+  <h1>Recherche d'itinéraires</h1>
+  <p class="hint">Powered by Neo4j — graphe de villes</p>
+
+  <form [formGroup]="form" (ngSubmit)="search()" class="search-form">
+    <label>Ville départ <input formControlName="origin" /></label>
+    <label>Ville arrivée <input formControlName="destination" /></label>
+    <button type="submit">Rechercher</button>
+  </form>
+
+  @if (searched()) {
+    <div class="results">
+      @for (route of routes(); track $index) {
+        <div class="route-card">
+          <p class="path">{{ route.cities.join(' → ') }}</p>
+          <p class="meta">{{ route.totalDurationMin }} min · {{ route.totalPrice | currency:'EUR' }}</p>
+        </div>
+      } @empty {
+        <p>Aucun itinéraire trouvé.</p>
+      }
+    </div>
+  }
+</div>

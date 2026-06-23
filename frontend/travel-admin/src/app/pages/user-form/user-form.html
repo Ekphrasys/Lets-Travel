@@ -1,0 +1,18 @@
+<div class="page">
+  <h1>{{ isEdit ? 'Modifier utilisateur' : 'Nouvel utilisateur' }}</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label>Email <input type="email" formControlName="email" /></label>
+    <label>Prénom <input formControlName="firstName" /></label>
+    <label>Nom <input formControlName="lastName" /></label>
+    <label>Rôle
+      <select formControlName="role">
+        <option value="USER">USER</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+    </label>
+    <div class="actions">
+      <button type="submit">{{ isEdit ? 'Enregistrer' : 'Créer' }}</button>
+      <a routerLink="/admin/users">Annuler</a>
+    </div>
+  </form>
+</div>

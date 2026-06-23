@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  description: Register et login — JWT 24h
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/auth
+
+paths:
+  /register:
+    post:
+      summary: Inscription
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: Compte créé + JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Email déjà utilisé
+
+  /login:
+    post:
+      summary: Connexion
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Email ou mot de passe incorrect
+
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [USER, ADMIN]

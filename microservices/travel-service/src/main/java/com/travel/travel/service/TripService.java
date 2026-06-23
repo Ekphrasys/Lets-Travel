@@ -1,0 +1,91 @@
+package com.travel.travel.service;
+
+import com.travel.travel.dto.CreateTripRequest;
+import com.travel.travel.dto.TripResponse;
+import com.travel.travel.model.Trip;
+import com.travel.travel.repository.TripRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class TripService {
+
+    private final TripRepository tripRepository;
+
+    public TripService(TripRepository tripRepository) {
+        this.tripRepository = tripRepository;
+    }
+
+    public List<TripResponse> findAll() {
+        return tripRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    public TripResponse getById(UUID id) {
+        return tripRepository.findById(id)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+    }
+
+    @Transactional
+    public TripResponse create(CreateTripRequest request) {
+        Trip trip = new Trip();
+        trip.setId(UUID.randomUUID());
+        trip.setTitle(request.title());
+        trip.setOriginCity(request.originCity());
+        trip.setDestinationCity(request.destinationCity());
+        trip.setDepartureDate(request.departureDate());
+        trip.setPrice(request.price());
+        trip.setSeatsAvailable(request.seatsAvailable());
+        trip.setStatus("ACTIVE");
+        return toResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public TripResponse update(UUID id, CreateTripRequest request) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+        trip.setTitle(request.title());
+        trip.setOriginCity(request.originCity());
+        trip.setDestinationCity(request.destinationCity());
+        trip.setDepartureDate(request.departureDate());
+        trip.setPrice(request.price());
+        trip.setSeatsAvailable(request.seatsAvailable());
+        return toResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        if (!tripRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable");
+        }
+        tripRepository.deleteById(id);
+    }
+
+    Trip getTripEntity(UUID id) {
+        return tripRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+    }
+
+    @Transactional
+    public void saveTrip(Trip trip) {
+        tripRepository.save(trip);
+    }
+
+    private TripResponse toResponse(Trip trip) {
+        return new TripResponse(
+                trip.getId(),
+                trip.getTitle(),
+                trip.getOriginCity(),
+                trip.getDestinationCity(),
+                trip.getDepartureDate(),
+                trip.getPrice(),
+                trip.getSeatsAvailable(),
+                trip.getStatus()
+        );
+    }
+}

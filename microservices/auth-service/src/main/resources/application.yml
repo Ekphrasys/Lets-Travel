@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/travel_db?currentSchema=auth
+    username: travel
+    password: travel_secret
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: auth
+    open-in-view: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  secret: ${JWT_SECRET:travel-jwt-secret-key-minimum-32-characters-long}
+  expiration-hours: 24
+
+internal:
+  api-key: ${INTERNAL_API_KEY:travel-internal-api-key-change-me}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,7 @@
+---
+# Playbook principal — idempotent, relançable sans casse
+- name: Travel — déploiement complet
+  import_playbook: prerequisites.yml
+
+- name: Travel — lancement stack
+  import_playbook: deploy.yml
