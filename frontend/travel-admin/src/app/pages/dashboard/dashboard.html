@@ -1,32 +1,457 @@
-<div class="page">
-  <h1>Tableau de bord</h1>
-  <p class="welcome">
-    Bonjour
-    @if (auth.currentUser(); as user) {
-      <strong>{{ user.email }}</strong>
-      <span class="badge">{{ user.role }}</span>
-    }
-  </p>
-
-  <div class="stats">
-    <div class="stat-card">
-      <span class="stat-value">{{ trips().length }}</span>
-      <span class="stat-label">Voyages disponibles</span>
+<div class="page dashboard-container">
+  
+  <!-- Header / Accueil -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h1>Mon Espace Lets Travel</h1>
+      @if (auth.currentUser(); as user) {
+        <p class="welcome">
+          Bonjour, <strong>{{ user.email }}</strong> 
+          <span class="badge role-badge">{{ user.role }}</span>
+        </p>
+      }
     </div>
-    <div class="stat-card">
-      <span class="stat-value">{{ bookings().length }}</span>
-      <span class="stat-label">Mes réservations</span>
+    <div class="header-right quick-links">
+      <a routerLink="/routes" class="btn btn-secondary">🗺️ Rechercher un Itinéraire (Graphe)</a>
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin/users" class="btn btn-purple">👥 Gérer les Comptes</a>
+        <a routerLink="/admin/payments" class="btn btn-purple">💳 Gérer les Paiements</a>
+        <a routerLink="/trips/new" class="btn btn-purple">➕ Créer un Voyage</a>
+      }
+      @if (auth.isManager()) {
+        <a routerLink="/trips/new" class="btn btn-purple">➕ Créer un Voyage</a>
+      }
     </div>
-  </div>
+  </header>
 
-  <div class="quick-links">
-    <a routerLink="/trips" class="card-link">✈️ Catalogue voyages</a>
-    <a routerLink="/bookings" class="card-link">📋 Mes réservations</a>
-    <a routerLink="/routes" class="card-link">🗺️ Recherche itinéraires</a>
-    @if (auth.isAdmin()) {
-      <a routerLink="/admin/users" class="card-link admin">👥 Utilisateurs</a>
-      <a routerLink="/admin/payments" class="card-link admin">💳 Paiements</a>
-      <a routerLink="/trips/new" class="card-link admin">➕ Nouveau voyage</a>
+  <!-- Messages Flash -->
+  @if (successMessage) {
+    <div class="alert alert-success">{{ successMessage }}</div>
+  }
+  @if (errorMessage) {
+    <div class="alert alert-danger">{{ errorMessage }}</div>
+  }
+
+  <!-- ==================== VUE VOYAGEUR (TRAVELER / USER) ==================== -->
+  @if (auth.isTraveler()) {
+    
+    <!-- Statistiques Personnelles Voyageur -->
+    <section class="dashboard-section card-box">
+      <h2>📊 Mes Statistiques Personnelles</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-icon">✈️</span>
+          <span class="stat-value">{{ bookings().length }}</span>
+          <span class="stat-label">Réservations totales</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🔔</span>
+          <span class="stat-value">{{ reportCounts().reportsFiled }}</span>
+          <span class="stat-label">Signalements envoyés</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">⚠️</span>
+          <span class="stat-value">{{ reportCounts().reportsReceived }}</span>
+          <span class="stat-label">Signalements reçus</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Moteur de Recherche Elasticsearch & Autocomplete -->
+    <section class="dashboard-section card-box search-section">
+      <h2>🔍 Recherche de Voyages (Elasticsearch & Autocomplete)</h2>
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          placeholder="Où voulez-vous voyager ? (ex: Londres, Tokyo...)" 
+          [(ngModel)]="searchQuery" 
+          (keyup)="onSearchChange()" 
+          class="form-control search-input"
+        />
+        <button (click)="triggerSearch()" class="btn btn-primary">Rechercher</button>
+        @if (searchQuery) {
+          <button (click)="clearSearch()" class="btn btn-clear">Clear</button>
+        }
+      </div>
+
+      <!-- Overlay Autocomplete Suggestions -->
+      @if (autocompleteSuggestions().length > 0) {
+        <div class="autocomplete-dropdown">
+          @for (s of autocompleteSuggestions(); track s) {
+            <div class="suggestion-item" (click)="selectSuggestion(s)">
+              📍 {{ s }}
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Résultats de recherche -->
+      @if (searchResults().length > 0) {
+        <div class="results-container">
+          <h3>Résultats de recherche (Elasticsearch)</h3>
+          <div class="trips-grid">
+            @for (t of searchResults(); track t.id) {
+              <div class="trip-card">
+                <h4>{{ t.title }}</h4>
+                <p>Départ de <strong>{{ t.originCity }}</strong> vers <strong>{{ t.destinationCity }}</strong></p>
+                <p>Le {{ t.departureDate | date:'dd/MM/yyyy' }}</p>
+                <p class="price">{{ t.price }} €</p>
+                <p class="seats">{{ t.seatsAvailable }} places restantes</p>
+                <div class="booking-actions">
+                  <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary">💳 Carte</button>
+                  <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success">🅿️ PayPal</button>
+                  <button (click)="bookTrip(t, 'BANK_TRANSFER')" class="btn btn-sm btn-secondary">🏦 Virement</button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Recommandations Personnalisées Neo4j -->
+    <section class="dashboard-section card-box recommendations-section">
+      <h2>🌟 Suggestions personnalisées pour vous (Neo4j Graph-based)</h2>
+      <p class="section-desc">Recommandations générées à partir de vos anciens voyages, vos feedbacks positifs (note >= 4) et vos budgets préférés.</p>
+      <div class="trips-grid">
+        @for (t of recommendations(); track t.id) {
+          <div class="trip-card recommended">
+            <div class="badge-rec">Recommandé</div>
+            <h4>{{ t.title }}</h4>
+            <p>Départ de <strong>{{ t.originCity }}</strong> vers <strong>{{ t.destinationCity }}</strong></p>
+            <p>Le {{ t.departureDate | date:'dd/MM/yyyy' }}</p>
+            <p class="price">{{ t.price }} €</p>
+            <div class="booking-actions">
+              <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary">💳 Carte</button>
+              <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success">Paypal</button>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-msg">Aucune suggestion disponible pour le moment. Explorez le catalogue !</p>
+        }
+      </div>
+    </section>
+
+    <!-- Mes Voyages & Feedbacks -->
+    <section class="dashboard-section card-box">
+      <h2>📋 Mes Réservations & Voyages Réalisés</h2>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Voyage</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Action / Avis</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of bookings(); track b.id) {
+              <!-- Find trip details -->
+              @if (trips(); as list) {
+                @for (t of list; track t.id) {
+                  @if (t.id === b.tripId) {
+                    <tr>
+                      <td><strong>{{ t.title }}</strong></td>
+                      <td>{{ t.departureDate | date:'dd/MM/yyyy' }}</td>
+                      <td><span class="badge status-{{ b.status.toLowerCase() }}">{{ b.status }}</span></td>
+                      <td>
+                        @if (b.status === 'CONFIRMED') {
+                          <button (click)="cancelBooking(b)" class="btn btn-sm btn-danger">Annuler</button>
+                          <button (click)="openFeedbackModal(t)" class="btn btn-sm btn-primary ml-2">Laisser un avis</button>
+                        } @else {
+                          -
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            } @empty {
+              <tr>
+                <td colspan="4" class="empty-msg">Vous n'avez pas encore effectué de réservation.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Liste des Travel Managers (pour transparence / signalement) -->
+    <section class="dashboard-section card-box">
+      <h2>👥 Annuaire des Travel Managers & Signalements</h2>
+      <div class="managers-grid">
+        @for (m of managers(); track m.id) {
+          <div class="manager-card">
+            <h4>{{ m.firstName }} {{ m.lastName }}</h4>
+            <p>Email: {{ m.email }}</p>
+            <div class="manager-actions">
+              <button (click)="openReportModal(m)" class="btn btn-sm btn-danger">🚩 Signaler ce Manager</button>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+  }
+
+  <!-- ==================== VUE MANAGER (TRAVEL MANAGER) ==================== -->
+  @if (auth.isManager()) {
+    
+    <!-- Statistiques Manager -->
+    @if (managerDashboardData(); as data) {
+      <section class="dashboard-section card-box">
+        <h2>📊 Statistiques Clés - Travel Manager</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <span class="stat-value">{{ data.totalIncome }} €</span>
+            <span class="stat-label">Chiffre d'Affaires</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">✈️</span>
+            <span class="stat-value">{{ data.tripsCount }}</span>
+            <span class="stat-label">Voyages organisés</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <span class="stat-value">{{ data.travelersCount }}</span>
+            <span class="stat-label">Voyageurs abonnés</span>
+          </div>
+        </div>
+      </section>
     }
-  </div>
+
+    <!-- Mes Offres de Voyage -->
+    <section class="dashboard-section card-box">
+      <h2>✈️ Mes Offres de Voyage</h2>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Itinéraire</th>
+              <th>Date départ</th>
+              <th>Tarif</th>
+              <th>Places disponibles</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of managerTrips(); track t.id) {
+              <tr>
+                <td><strong>{{ t.title }}</strong></td>
+                <td>{{ t.originCity }} ➔ {{ t.destinationCity }}</td>
+                <td>{{ t.departureDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ t.price }} €</td>
+                <td>{{ t.seatsAvailable }}</td>
+                <td>
+                  <button (click)="openSubscribersModal(t)" class="btn btn-sm btn-secondary">👥 Abonnés</button>
+                  <a [routerLink]="['/trips', t.id, 'edit']" class="btn btn-sm btn-primary ml-2">Edit</a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty-msg">Aucune offre de voyage créée pour le moment.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Avis spécifiques reçus par le Manager -->
+    @if (managerDashboardData(); as data) {
+      <section class="dashboard-section card-box">
+        <h2>💬 Avis voyageurs sur mes offres</h2>
+        <div class="feedbacks-list">
+          @for (f of data.feedbacks; track f.id) {
+            <div class="feedback-item">
+              <div class="feedback-header">
+                <strong>{{ f.userFirstName }} {{ f.userLastName }}</strong>
+                <span class="stars">{{ '★'.repeat(f.rating) }}{{ '☆'.repeat(5 - f.rating) }}</span>
+              </div>
+              <p class="comment">" {{ f.comment }} "</p>
+              <span class="date">{{ f.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          } @empty {
+            <p class="empty-msg">Aucun avis reçu pour l'instant.</p>
+          }
+        </div>
+      </section>
+    }
+
+  }
+
+  <!-- ==================== VUE ADMINISTRATEUR (ADMIN) ==================== -->
+  @if (auth.isAdmin()) {
+    
+    <!-- Statistiques Administrateur -->
+    @if (adminDashboardData(); as data) {
+      <section class="dashboard-section card-box">
+        <h2>📊 Tableau de Bord - Administrateur Général</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <span class="stat-value">{{ data.totalIncome }} €</span>
+            <span class="stat-label">Chiffre d'Affaires Global</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">✈️</span>
+            <span class="stat-value">{{ data.totalTrips }}</span>
+            <span class="stat-label">Voyages totaux</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Classement des Managers par Score de Performance -->
+      <section class="dashboard-section card-box">
+        <h2>🏆 Leaderboard des Managers (Performance & Feedbacks)</h2>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Manager</th>
+                <th>Nombre Voyages</th>
+                <th>Revenus organisés</th>
+                <th>Note moyenne</th>
+                <th>Score de Performance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of data.managersPerformance; track m.managerId) {
+                <tr>
+                  <td><strong>{{ m.name }}</strong><br><small>{{ m.email }}</small></td>
+                  <td>{{ m.tripsCount }}</td>
+                  <td>{{ m.income }} €</td>
+                  <td>⭐ {{ m.averageRating | number:'1.1-2' }} / 5</td>
+                  <td><span class="badge badge-score">{{ m.performanceScore | number:'1.0-0' }} pts</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- Liste des Signalements (Reports) pour modération -->
+    <section class="dashboard-section card-box">
+      <h2>🚩 Modération : Signalements déposés</h2>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID Signalement</th>
+              <th>Raison</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of adminReports(); track r.id) {
+              <tr>
+                <td><small>{{ r.id }}</small></td>
+                <td>{{ r.reason }}</td>
+                <td><span class="badge status-{{ r.status.toLowerCase() }}">{{ r.status }}</span></td>
+                <td>
+                  @if (r.status === 'PENDING') {
+                    <button (click)="resolveReport(r.id)" class="btn btn-sm btn-success">Marquer Résolu</button>
+                  } @else {
+                    -
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="empty-msg">Aucun signalement en attente.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  }
+
+  <!-- ==================== MODALS / POPUPS ==================== -->
+
+  <!-- Modal Laisser un Avis -->
+  @if (showFeedbackModal && selectedTripForFeedback) {
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <h3>Laisser un Avis : {{ selectedTripForFeedback.title }}</h3>
+        <label>Note:
+          <select [(ngModel)]="ratingValue" class="form-control">
+            <option [value]="5">⭐⭐⭐⭐⭐ (5/5)</option>
+            <option [value]="4">⭐⭐⭐⭐ (4/5)</option>
+            <option [value]="3">⭐⭐⭐ (3/5)</option>
+            <option [value]="2">⭐⭐ (2/5)</option>
+            <option [value]="1">⭐ (1/5)</option>
+          </select>
+        </label>
+        <label>Commentaire:
+          <textarea [(ngModel)]="commentValue" placeholder="Partagez votre expérience..." class="form-control"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button (click)="submitFeedback()" class="btn btn-primary">Envoyer</button>
+          <button (click)="showFeedbackModal = false" class="btn btn-secondary">Annuler</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Signalement -->
+  @if (showReportModal && selectedUserForReport) {
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <h3>Signaler : {{ selectedUserForReport.firstName }} {{ selectedUserForReport.lastName }}</h3>
+        <label>Motif de signalement:
+          <textarea [(ngModel)]="reportReason" placeholder="Décrivez le motif..." class="form-control"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button (click)="submitReport()" class="btn btn-danger">Envoyer le signalement</button>
+          <button (click)="showReportModal = false" class="btn btn-secondary">Annuler</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Abonnés (Manager) -->
+  @if (showSubscribersModal && selectedTripForSubscribers) {
+    <div class="modal-overlay">
+      <div class="modal-card modal-large">
+        <h3>Abonnés de : {{ selectedTripForSubscribers.title }}</h3>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sub of subscribersList(); track sub.id) {
+                <tr>
+                  <td>{{ sub.firstName }} {{ sub.lastName }}</td>
+                  <td>{{ sub.email }}</td>
+                  <td>
+                    <button (click)="unsubscribeTraveler(sub.id)" class="btn btn-sm btn-danger">Désabonner (Rembourser)</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="empty-msg">Aucun abonné sur ce voyage.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-actions">
+          <button (click)="showSubscribersModal = false" class="btn btn-secondary">Fermer</button>
+        </div>
+      </div>
+    </div>
+  }
+
 </div>

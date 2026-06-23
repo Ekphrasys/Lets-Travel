@@ -7,6 +7,12 @@ import com.travel.travel.dto.RouteResponse;
 import com.travel.travel.dto.TripResponse;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
+import com.travel.travel.service.ElasticsearchService;
+import com.travel.travel.service.Neo4jRecommendationService;
+import com.travel.travel.service.BookingService;
+import com.travel.travel.repository.FeedbackRepository;
+import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.client.UserServiceClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,6 +20,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,7 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(TripController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(SecurityConfig.class)
 class TripControllerTest {
 
     @Autowired
@@ -50,12 +57,41 @@ class TripControllerTest {
     @MockBean
     private RouteSearchService routeSearchService;
 
+    @MockBean
+    private ElasticsearchService elasticsearchService;
+
+    @MockBean
+    private Neo4jRecommendationService neo4jRecommendationService;
+
+    @MockBean
+    private BookingService bookingService;
+
+    @MockBean
+    private FeedbackRepository feedbackRepository;
+
+    @MockBean
+    private BookingRepository bookingRepository;
+
+    @MockBean
+    private UserServiceClient userServiceClient;
+
+    private static final String ADMIN_ID = "550e8400-e29b-41d4-a716-446655440001";
+
+    private static org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder withAdmin(
+            org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder builder) {
+        return builder.with(request -> {
+            request.setUserPrincipal(new UsernamePasswordAuthenticationToken(
+                    ADMIN_ID, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+            return request;
+        });
+    }
+
     @Test
     void listAll_isPublic() throws Exception {
         UUID id = UUID.randomUUID();
         when(tripService.findAll()).thenReturn(List.of(
                 new TripResponse(id, "Paris-Rome", "Paris", "Rome",
-                        LocalDate.of(2026, 7, 1), BigDecimal.valueOf(199), 10, "OPEN")));
+                        LocalDate.of(2026, 7, 1), BigDecimal.valueOf(199), 10, "OPEN", UUID.randomUUID())));
 
         mockMvc.perform(get("/api/travels"))
                 .andExpect(status().isOk())
@@ -79,7 +115,7 @@ class TripControllerTest {
         UUID id = UUID.randomUUID();
         when(tripService.getById(id))
                 .thenReturn(new TripResponse(id, "Trip", "A", "B",
-                        LocalDate.of(2026, 8, 1), BigDecimal.TEN, 5, "OPEN"));
+                        LocalDate.of(2026, 8, 1), BigDecimal.TEN, 5, "OPEN", UUID.randomUUID()));
 
         mockMvc.perform(get("/api/travels/{id}", id))
                 .andExpect(status().isOk())
@@ -87,14 +123,13 @@ class TripControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     void create_requiresAdmin() throws Exception {
         UUID id = UUID.randomUUID();
-        when(tripService.create(any(CreateTripRequest.class)))
+        when(tripService.create(any(CreateTripRequest.class), any(UUID.class)))
                 .thenReturn(new TripResponse(id, "New", "Paris", "Lyon",
-                        LocalDate.of(2026, 9, 1), BigDecimal.valueOf(50), 20, "OPEN"));
+                        LocalDate.of(2026, 9, 1), BigDecimal.valueOf(50), 20, "OPEN", UUID.randomUUID()));
 
-        mockMvc.perform(post("/api/travels")
+        mockMvc.perform(withAdmin(post("/api/travels"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateTripRequest("New", "Paris", "Lyon",
@@ -104,23 +139,22 @@ class TripControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     void update_andDelete_adminOnly() throws Exception {
         UUID id = UUID.randomUUID();
-        when(tripService.update(eq(id), any(CreateTripRequest.class)))
+        when(tripService.update(eq(id), any(CreateTripRequest.class), any(UUID.class), eq(true)))
                 .thenReturn(new TripResponse(id, "Updated", "Paris", "Lyon",
-                        LocalDate.of(2026, 9, 1), BigDecimal.valueOf(60), 15, "OPEN"));
+                        LocalDate.of(2026, 9, 1), BigDecimal.valueOf(60), 15, "OPEN", UUID.randomUUID()));
 
-        mockMvc.perform(put("/api/travels/{id}", id)
+        mockMvc.perform(withAdmin(put("/api/travels/{id}", id))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateTripRequest("Updated", "Paris", "Lyon",
                                         LocalDate.of(2026, 9, 1), BigDecimal.valueOf(60), 15))))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(delete("/api/travels/{id}", id))
+        mockMvc.perform(withAdmin(delete("/api/travels/{id}", id)))
                 .andExpect(status().isNoContent());
 
-        verify(tripService).delete(id);
+        verify(tripService).delete(eq(id), any(UUID.class), eq(true));
     }
 }

@@ -20,15 +20,18 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
-            PaymentServiceClient paymentServiceClient
+            PaymentServiceClient paymentServiceClient,
+            Neo4jRecommendationService neo4jRecommendationService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -46,7 +49,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         PaymentServiceClient.PaymentResult payment = paymentServiceClient.createPayment(
-                booking.getId(), userId, trip.getPrice()
+                booking.getId(), userId, trip.getPrice(), request.paymentMethod()
         );
 
         if ("COMPLETED".equals(payment.status())) {
@@ -54,6 +57,10 @@ public class BookingService {
             booking.setPaymentId(payment.id());
             trip.setSeatsAvailable(trip.getSeatsAvailable() - 1);
             tripService.saveTrip(trip);
+            
+            // Sync to Neo4j
+            neo4jRecommendationService.syncBooking(userId, trip.getId(), false);
+            
             return toResponse(bookingRepository.save(booking));
         }
 
@@ -80,6 +87,11 @@ public class BookingService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà annulée");
         }
 
+        // 3-day cutoff check
+        if (!isAdmin && java.time.LocalDate.now().plusDays(3).isAfter(booking.getTrip().getDepartureDate())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Annulation impossible moins de 3 jours avant le départ");
+        }
+
         if ("CONFIRMED".equals(booking.getStatus())) {
             if (booking.getPaymentId() != null) {
                 paymentServiceClient.refund(booking.getPaymentId());
@@ -90,6 +102,10 @@ public class BookingService {
         }
 
         booking.setStatus("CANCELLED");
+        
+        // Sync to Neo4j
+        neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
+        
         return toResponse(bookingRepository.save(booking));
     }
 

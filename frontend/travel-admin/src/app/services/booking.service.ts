@@ -13,8 +13,8 @@ export class BookingService {
     return this.http.get<Booking[]>(`${this.base}/me`);
   }
 
-  book(tripId: string): Observable<Booking> {
-    return this.http.post<Booking>(this.base, { tripId });
+  book(tripId: string, paymentMethod?: string): Observable<Booking> {
+    return this.http.post<Booking>(this.base, { tripId, paymentMethod });
   }
 
   cancel(id: string): Observable<Booking> {

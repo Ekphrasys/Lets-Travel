@@ -31,6 +31,9 @@ public class PaymentService {
         payment.setUserId(request.userId());
         payment.setAmount(request.amount());
         payment.setStatus(mockPaymentStatus(request.amount()));
+        if (request.paymentMethod() != null) {
+            payment.setPaymentMethod(request.paymentMethod());
+        }
         return toResponse(paymentRepository.save(payment));
     }
 
@@ -83,6 +86,7 @@ public class PaymentService {
                 payment.getUserId(),
                 payment.getAmount(),
                 payment.getStatus(),
+                payment.getPaymentMethod(),
                 payment.getCreatedAt()
         );
     }

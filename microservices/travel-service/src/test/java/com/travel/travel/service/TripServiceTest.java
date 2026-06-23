@@ -28,6 +28,12 @@ class TripServiceTest {
     @Mock
     private TripRepository tripRepository;
 
+    @Mock
+    private ElasticsearchService elasticsearchService;
+
+    @Mock
+    private Neo4jRecommendationService neo4jRecommendationService;
+
     @InjectMocks
     private TripService tripService;
 
@@ -72,7 +78,7 @@ class TripServiceTest {
     @Test
     void delete_notFound() {
         UUID id = UUID.randomUUID();
-        when(tripRepository.existsById(id)).thenReturn(false);
+        when(tripRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tripService.delete(id))
                 .isInstanceOf(ResponseStatusException.class);
@@ -81,11 +87,12 @@ class TripServiceTest {
     @Test
     void delete_success() {
         UUID id = UUID.randomUUID();
-        when(tripRepository.existsById(id)).thenReturn(true);
+        Trip trip = trip(id);
+        when(tripRepository.findById(id)).thenReturn(Optional.of(trip));
 
         tripService.delete(id);
 
-        verify(tripRepository).deleteById(id);
+        verify(tripRepository).delete(trip);
     }
 
     private static CreateTripRequest sampleRequest() {

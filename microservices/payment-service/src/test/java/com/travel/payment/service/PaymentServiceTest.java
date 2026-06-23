@@ -37,7 +37,7 @@ class PaymentServiceTest {
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         PaymentResponse response = paymentService.createPayment(
-                new CreatePaymentRequest(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.ZERO)
+                new CreatePaymentRequest(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.ZERO, "CARD")
         );
 
         assertThat(response.status()).isEqualTo("FAILED");
@@ -143,7 +143,7 @@ class PaymentServiceTest {
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         PaymentResponse response = paymentService.createPayment(
-                new CreatePaymentRequest(bookingId, userId, new BigDecimal("199.99"))
+                new CreatePaymentRequest(bookingId, userId, new BigDecimal("199.99"), "CARD")
         );
 
         assertThat(response.status()).isEqualTo("COMPLETED");

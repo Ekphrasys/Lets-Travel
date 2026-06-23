@@ -38,6 +38,9 @@ public class Trip {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "manager_id")
+    private UUID managerId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -103,6 +106,14 @@ public class Trip {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public UUID getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(UUID managerId) {
+        this.managerId = managerId;
     }
 
     public Instant getCreatedAt() {

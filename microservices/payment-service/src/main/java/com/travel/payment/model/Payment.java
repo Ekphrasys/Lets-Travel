@@ -28,6 +28,9 @@ public class Payment {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "payment_method", nullable = false)
+    private String paymentMethod = "CARD";
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -69,6 +72,14 @@ public class Payment {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 
     public Instant getCreatedAt() {
