@@ -2,9 +2,11 @@ package com.travel.travel.service;
 
 import com.travel.travel.dto.CreateTripRequest;
 import com.travel.travel.dto.ManagerStatsResponse;
+import com.travel.travel.dto.TripAnalyticsResponse;
 import com.travel.travel.dto.TripResponse;
 import com.travel.travel.model.Trip;
 import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.TripRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -20,10 +24,12 @@ public class TripService {
 
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public TripService(TripRepository tripRepository, BookingRepository bookingRepository) {
+    public TripService(TripRepository tripRepository, BookingRepository bookingRepository, FeedbackRepository feedbackRepository) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     public List<TripResponse> findAll() {
@@ -43,6 +49,44 @@ public class TripService {
         long travelers = bookingRepository.countByTripIdInAndStatus(tripIds, "CONFIRMED");
         BigDecimal income = bookingRepository.sumPriceByTripIdInAndStatus(tripIds, "CONFIRMED");
         return new ManagerStatsResponse(trips.size(), travelers, income);
+    }
+
+    public List<TripAnalyticsResponse> getManagerAnalytics(UUID managerId) {
+        List<Trip> trips = tripRepository.findByManagerId(managerId);
+        if (trips.isEmpty()) return List.of();
+
+        List<UUID> tripIds = trips.stream().map(Trip::getId).toList();
+
+        Map<UUID, Long> bookingCounts = new HashMap<>();
+        Map<UUID, BigDecimal> revenues = new HashMap<>();
+        bookingRepository.bookingStatsByTripIds(tripIds, "CONFIRMED").forEach(row -> {
+            UUID tid = (UUID) row[0];
+            bookingCounts.put(tid, ((Number) row[1]).longValue());
+            revenues.put(tid, (BigDecimal) row[2]);
+        });
+
+        Map<UUID, Double> avgRatings = new HashMap<>();
+        Map<UUID, Long> feedbackCounts = new HashMap<>();
+        feedbackRepository.ratingStatsByTripIds(tripIds).forEach(row -> {
+            UUID tid = (UUID) row[0];
+            avgRatings.put(tid, ((Number) row[1]).doubleValue());
+            feedbackCounts.put(tid, ((Number) row[2]).longValue());
+        });
+
+        return trips.stream().map(trip -> {
+            UUID tid = trip.getId();
+            long confirmed = bookingCounts.getOrDefault(tid, 0L);
+            BigDecimal revenue = revenues.getOrDefault(tid, BigDecimal.ZERO);
+            double avgRating = avgRatings.getOrDefault(tid, 0.0);
+            long fbCount = feedbackCounts.getOrDefault(tid, 0L);
+            int total = (int) confirmed + trip.getSeatsAvailable();
+            double occupancy = total > 0 ? (double) confirmed / total * 100.0 : 0.0;
+            return new TripAnalyticsResponse(
+                    tid, trip.getTitle(), trip.getOriginCity(), trip.getDestinationCity(),
+                    trip.getDepartureDate(), trip.getPrice(), trip.getSeatsAvailable(), trip.getStatus(),
+                    confirmed, revenue, occupancy, avgRating, fbCount
+            );
+        }).toList();
     }
 
     public TripResponse getById(UUID id) {

@@ -79,6 +79,8 @@ h1 { margin: 0; }
 }
 
 .action-card:hover { background: #f3f4f6; }
+.action-card--highlight { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+.action-card--highlight:hover { background: #dbeafe; }
 
 .action-icon { font-size: 1.1rem; }
 

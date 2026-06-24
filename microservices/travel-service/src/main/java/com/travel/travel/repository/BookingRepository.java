@@ -19,4 +19,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     @Query("SELECT COALESCE(SUM(b.trip.price), 0) FROM Booking b WHERE b.trip.id IN :tripIds AND b.status = :status")
     BigDecimal sumPriceByTripIdInAndStatus(@Param("tripIds") List<UUID> tripIds, @Param("status") String status);
+
+    @Query("SELECT b.trip.id, COUNT(b), COALESCE(SUM(b.trip.price), 0) FROM Booking b WHERE b.trip.id IN :tripIds AND b.status = :status GROUP BY b.trip.id")
+    List<Object[]> bookingStatsByTripIds(@Param("tripIds") List<UUID> tripIds, @Param("status") String status);
 }

@@ -82,3 +82,19 @@ export interface ManagerStats {
   totalTravelers: number;
   totalIncome: number;
 }
+
+export interface TripAnalytics {
+  id: string;
+  title: string;
+  originCity: string;
+  destinationCity: string;
+  departureDate: string;
+  price: number;
+  seatsAvailable: number;
+  status: string;
+  confirmedBookings: number;
+  revenue: number;
+  occupancyRate: number;
+  averageRating: number;
+  feedbackCount: number;
+}

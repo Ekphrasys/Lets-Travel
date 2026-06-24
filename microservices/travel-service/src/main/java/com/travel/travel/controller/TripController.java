@@ -3,6 +3,7 @@ package com.travel.travel.controller;
 import com.travel.travel.dto.CreateTripRequest;
 import com.travel.travel.dto.ManagerStatsResponse;
 import com.travel.travel.dto.RouteResponse;
+import com.travel.travel.dto.TripAnalyticsResponse;
 import com.travel.travel.dto.TripResponse;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
@@ -45,6 +46,13 @@ public class TripController {
     public ManagerStatsResponse myStats(Authentication authentication) {
         UUID callerId = UUID.fromString(authentication.getName());
         return tripService.getManagerStats(callerId);
+    }
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER')")
+    public List<TripAnalyticsResponse> myAnalytics(Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
+        return tripService.getManagerAnalytics(callerId);
     }
 
     @GetMapping("/routes/search")

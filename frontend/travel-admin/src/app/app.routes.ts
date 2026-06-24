@@ -15,6 +15,7 @@ import { ManagerTripsComponent } from './pages/manager-trips/manager-trips';
 import { ManagerFeedbackComponent } from './pages/manager-feedback/manager-feedback';
 import { ManagerDashboardComponent } from './pages/manager-dashboard/manager-dashboard';
 import { ManagerSubscribersComponent } from './pages/manager-subscribers/manager-subscribers';
+import { ManagerAnalyticsComponent } from './pages/manager-analytics/manager-analytics';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
@@ -29,6 +30,7 @@ export const routes: Routes = [
   { path: 'manager/trips', component: ManagerTripsComponent, canActivate: [managerOrAdminGuard] },
   { path: 'manager/trips/:id/feedback', component: ManagerFeedbackComponent, canActivate: [managerOrAdminGuard] },
   { path: 'manager/trips/:id/subscribers', component: ManagerSubscribersComponent, canActivate: [managerOrAdminGuard] },
+  { path: 'manager/analytics', component: ManagerAnalyticsComponent, canActivate: [managerOrAdminGuard] },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: 'admin/users/new', component: UserFormComponent, canActivate: [adminGuard] },
   { path: 'admin/users/:id/edit', component: UserFormComponent, canActivate: [adminGuard] },
