@@ -76,3 +76,9 @@ export interface UpdatePaymentPayload {
   amount: number;
   status: string;
 }
+
+export interface ManagerStats {
+  totalTrips: number;
+  totalTravelers: number;
+  totalIncome: number;
+}

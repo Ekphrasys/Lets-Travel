@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Trip } from '../models/travel.models';
+import type { ManagerStats, Trip } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
@@ -19,6 +19,10 @@ export class TripService {
 
   myTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(`${this.base}/my`);
+  }
+
+  myStats(): Observable<ManagerStats> {
+    return this.http.get<ManagerStats>(`${this.base}/stats`);
   }
 
   create(trip: Omit<Trip, 'id' | 'status' | 'managerId'>): Observable<Trip> {

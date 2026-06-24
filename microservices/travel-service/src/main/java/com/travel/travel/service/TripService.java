@@ -1,14 +1,17 @@
 package com.travel.travel.service;
 
 import com.travel.travel.dto.CreateTripRequest;
+import com.travel.travel.dto.ManagerStatsResponse;
 import com.travel.travel.dto.TripResponse;
 import com.travel.travel.model.Trip;
+import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.TripRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,9 +19,11 @@ import java.util.UUID;
 public class TripService {
 
     private final TripRepository tripRepository;
+    private final BookingRepository bookingRepository;
 
-    public TripService(TripRepository tripRepository) {
+    public TripService(TripRepository tripRepository, BookingRepository bookingRepository) {
         this.tripRepository = tripRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     public List<TripResponse> findAll() {
@@ -27,6 +32,17 @@ public class TripService {
 
     public List<TripResponse> findByManager(UUID managerId) {
         return tripRepository.findByManagerId(managerId).stream().map(this::toResponse).toList();
+    }
+
+    public ManagerStatsResponse getManagerStats(UUID managerId) {
+        List<Trip> trips = tripRepository.findByManagerId(managerId);
+        List<UUID> tripIds = trips.stream().map(Trip::getId).toList();
+        if (tripIds.isEmpty()) {
+            return new ManagerStatsResponse(0, 0, BigDecimal.ZERO);
+        }
+        long travelers = bookingRepository.countByTripIdInAndStatus(tripIds, "CONFIRMED");
+        BigDecimal income = bookingRepository.sumPriceByTripIdInAndStatus(tripIds, "CONFIRMED");
+        return new ManagerStatsResponse(trips.size(), travelers, income);
     }
 
     public TripResponse getById(UUID id) {
