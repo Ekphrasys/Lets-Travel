@@ -25,6 +25,10 @@ public class TripService {
         return tripRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    public List<TripResponse> findByManager(UUID managerId) {
+        return tripRepository.findByManagerId(managerId).stream().map(this::toResponse).toList();
+    }
+
     public TripResponse getById(UUID id) {
         return tripRepository.findById(id)
                 .map(this::toResponse)
@@ -32,7 +36,7 @@ public class TripService {
     }
 
     @Transactional
-    public TripResponse create(CreateTripRequest request) {
+    public TripResponse create(CreateTripRequest request, UUID managerId) {
         Trip trip = new Trip();
         trip.setId(UUID.randomUUID());
         trip.setTitle(request.title());
@@ -42,13 +46,17 @@ public class TripService {
         trip.setPrice(request.price());
         trip.setSeatsAvailable(request.seatsAvailable());
         trip.setStatus("ACTIVE");
+        trip.setManagerId(managerId);
         return toResponse(tripRepository.save(trip));
     }
 
     @Transactional
-    public TripResponse update(UUID id, CreateTripRequest request) {
+    public TripResponse update(UUID id, CreateTripRequest request, UUID callerId, boolean isAdmin) {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
         trip.setTitle(request.title());
         trip.setOriginCity(request.originCity());
         trip.setDestinationCity(request.destinationCity());
@@ -59,9 +67,11 @@ public class TripService {
     }
 
     @Transactional
-    public void delete(UUID id) {
-        if (!tripRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable");
+    public void delete(UUID id, UUID callerId, boolean isAdmin) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         tripRepository.deleteById(id);
     }
@@ -85,7 +95,8 @@ public class TripService {
                 trip.getDepartureDate(),
                 trip.getPrice(),
                 trip.getSeatsAvailable(),
-                trip.getStatus()
+                trip.getStatus(),
+                trip.getManagerId()
         );
     }
 }

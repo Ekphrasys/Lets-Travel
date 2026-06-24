@@ -1,7 +1,7 @@
 export interface AuthResponse {
   token: string;
   userId: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN';
 }
 
 export interface Trip {
@@ -13,6 +13,16 @@ export interface Trip {
   price: number;
   seatsAvailable: number;
   status: string;
+  managerId?: string;
+}
+
+export interface Feedback {
+  id: string;
+  tripId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
 }
 
 export interface Booking {

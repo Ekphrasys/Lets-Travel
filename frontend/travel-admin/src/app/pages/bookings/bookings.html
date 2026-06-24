@@ -21,12 +21,59 @@
           <td>{{ b.tripId }}</td>
           <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
           <td>{{ b.createdAt | date:'short' }}</td>
-          <td>
+          <td class="actions-cell">
             @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
-              <button (click)="cancel(b.id)">Annuler</button>
+              <button class="btn-cancel" (click)="cancel(b.id)">Annuler</button>
+            }
+            @if (b.status === 'CONFIRMED' && !hasSubmitted(b.id)) {
+              <button class="btn-feedback" (click)="openFeedback(b.id)">⭐ Laisser un avis</button>
+            }
+            @if (hasSubmitted(b.id)) {
+              <span class="avis-done">✓ Avis envoyé</span>
             }
           </td>
         </tr>
+
+        @if (activeFeedbackBookingId() === b.id) {
+          <tr class="feedback-row">
+            <td colspan="4">
+              <div class="feedback-form">
+                <p class="feedback-title">Votre avis sur ce voyage</p>
+
+                <div class="star-rating">
+                  @for (star of stars; track star) {
+                    <button
+                      class="star"
+                      [class.active]="star <= feedbackRating()"
+                      (click)="setRating(star)"
+                      type="button">★</button>
+                  }
+                  @if (feedbackRating() > 0) {
+                    <span class="rating-label">{{ feedbackRating() }}/5</span>
+                  }
+                </div>
+
+                <textarea
+                  class="feedback-comment"
+                  placeholder="Commentaire (optionnel)..."
+                  rows="3"
+                  [value]="feedbackComment()"
+                  (input)="feedbackComment.set($any($event.target).value)">
+                </textarea>
+
+                <div class="feedback-actions">
+                  <button
+                    class="btn-submit"
+                    [disabled]="feedbackRating() === 0"
+                    (click)="submitFeedback(b.tripId, b.id)">
+                    Envoyer
+                  </button>
+                  <button class="btn-cancel-feedback" (click)="closeFeedback()">Annuler</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        }
       } @empty {
         <tr><td colspan="4">Aucune réservation.</td></tr>
       }

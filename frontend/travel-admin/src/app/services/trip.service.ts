@@ -13,11 +13,19 @@ export class TripService {
     return this.http.get<Trip[]>(this.base);
   }
 
-  create(trip: Omit<Trip, 'id' | 'status'>): Observable<Trip> {
+  getById(id: string): Observable<Trip> {
+    return this.http.get<Trip>(`${this.base}/${id}`);
+  }
+
+  myTrips(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/my`);
+  }
+
+  create(trip: Omit<Trip, 'id' | 'status' | 'managerId'>): Observable<Trip> {
     return this.http.post<Trip>(this.base, trip);
   }
 
-  update(id: string, trip: Omit<Trip, 'id' | 'status'>): Observable<Trip> {
+  update(id: string, trip: Omit<Trip, 'id' | 'status' | 'managerId'>): Observable<Trip> {
     return this.http.put<Trip>(`${this.base}/${id}`, trip);
   }
 

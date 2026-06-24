@@ -33,6 +33,7 @@ CREATE TABLE travel.trips (
     price            DECIMAL(10,2) NOT NULL CHECK (price >= 0),
     seats_available  INT NOT NULL CHECK (seats_available >= 0),
     status           VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    manager_id       UUID,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -51,6 +52,19 @@ CREATE TABLE travel.bookings (
 
 CREATE INDEX idx_bookings_user_id ON travel.bookings(user_id);
 CREATE INDEX idx_bookings_trip_id ON travel.bookings(trip_id);
+
+-- travel.feedbacks
+CREATE TABLE travel.feedbacks (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id    UUID NOT NULL REFERENCES travel.trips(id),
+    user_id    UUID NOT NULL,
+    rating     INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment    TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_feedbacks_trip_id ON travel.feedbacks(trip_id);
+CREATE INDEX idx_feedbacks_user_id ON travel.feedbacks(user_id);
 
 -- payment.payments
 CREATE TABLE payment.payments (

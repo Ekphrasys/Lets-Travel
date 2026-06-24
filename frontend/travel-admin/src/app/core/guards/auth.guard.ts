@@ -22,3 +22,17 @@ export const adminGuard: CanActivateFn = () => {
   if (auth.isAuthenticated() && auth.isAdmin()) return true;
   return router.createUrlTree(['/']);
 };
+
+export const travelManagerGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAuthenticated() && auth.isTravelManager()) return true;
+  return router.createUrlTree(['/']);
+};
+
+export const managerOrAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAuthenticated() && auth.isManagerOrAdmin()) return true;
+  return router.createUrlTree(['/']);
+};

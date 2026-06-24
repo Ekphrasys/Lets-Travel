@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard, managerOrAdminGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
 import { DashboardComponent } from './pages/dashboard/dashboard';
@@ -11,16 +11,20 @@ import { AdminUsersComponent } from './pages/admin-users/admin-users';
 import { AdminPaymentsComponent } from './pages/admin-payments/admin-payments';
 import { UserFormComponent } from './pages/user-form/user-form';
 import { PaymentFormComponent } from './pages/payment-form/payment-form';
+import { ManagerTripsComponent } from './pages/manager-trips/manager-trips';
+import { ManagerFeedbackComponent } from './pages/manager-feedback/manager-feedback';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
   { path: '', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'trips', component: TripsComponent, canActivate: [authGuard] },
-  { path: 'trips/new', component: TripFormComponent, canActivate: [adminGuard] },
-  { path: 'trips/:id/edit', component: TripFormComponent, canActivate: [adminGuard] },
+  { path: 'trips/new', component: TripFormComponent, canActivate: [managerOrAdminGuard] },
+  { path: 'trips/:id/edit', component: TripFormComponent, canActivate: [managerOrAdminGuard] },
   { path: 'bookings', component: BookingsComponent, canActivate: [authGuard] },
   { path: 'routes', component: RoutesSearchComponent },
+  { path: 'manager/trips', component: ManagerTripsComponent, canActivate: [managerOrAdminGuard] },
+  { path: 'manager/trips/:id/feedback', component: ManagerFeedbackComponent, canActivate: [managerOrAdminGuard] },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: 'admin/users/new', component: UserFormComponent, canActivate: [adminGuard] },
   { path: 'admin/users/:id/edit', component: UserFormComponent, canActivate: [adminGuard] },

@@ -1,0 +1,37 @@
+<div class="page">
+  <a routerLink="/manager/trips" class="back-link">← Mes voyages</a>
+
+  @if (trip(); as t) {
+    <h1>Avis — {{ t.title }}</h1>
+    <p class="subtitle">{{ t.originCity }} → {{ t.destinationCity }} · {{ t.departureDate }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading">Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else {
+    <div class="summary">
+      <span class="avg-rating">{{ averageRating }} / 5</span>
+      <span class="count">{{ feedbacks().length }} avis</span>
+    </div>
+
+    @if (feedbacks().length === 0) {
+      <p class="empty">Aucun avis pour ce voyage.</p>
+    } @else {
+      <ul class="feedback-list">
+        @for (fb of feedbacks(); track fb.id) {
+          <li class="feedback-card">
+            <div class="fb-header">
+              <span class="stars">{{ stars(fb.rating) }}</span>
+              <span class="date">{{ fb.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+            @if (fb.comment) {
+              <p class="fb-comment">{{ fb.comment }}</p>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

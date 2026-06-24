@@ -23,10 +23,13 @@
     <a routerLink="/trips" class="card-link">✈️ Catalogue voyages</a>
     <a routerLink="/bookings" class="card-link">📋 Mes réservations</a>
     <a routerLink="/routes" class="card-link">🗺️ Recherche itinéraires</a>
+    @if (auth.isManagerOrAdmin()) {
+      <a routerLink="/manager/trips" class="card-link manager">🗂️ Mes voyages</a>
+      <a routerLink="/trips/new" class="card-link manager">➕ Nouveau voyage</a>
+    }
     @if (auth.isAdmin()) {
       <a routerLink="/admin/users" class="card-link admin">👥 Utilisateurs</a>
       <a routerLink="/admin/payments" class="card-link admin">💳 Paiements</a>
-      <a routerLink="/trips/new" class="card-link admin">➕ Nouveau voyage</a>
     }
   </div>
 </div>

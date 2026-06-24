@@ -12,6 +12,7 @@ public record TripResponse(
         LocalDate departureDate,
         BigDecimal price,
         int seatsAvailable,
-        String status
+        String status,
+        UUID managerId
 ) {
 }
