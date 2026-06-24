@@ -172,4 +172,16 @@ public class ElasticsearchService {
                 });
         return new ArrayList<>(suggestions);
     }
+
+    public void deleteTrip(UUID id) {
+        try {
+            webClient.delete()
+                    .uri("/trips/_doc/{id}", id.toString())
+                    .retrieve()
+                    .toBodilessEntity()
+                    .subscribe();
+        } catch (Exception e) {
+            System.err.println("Elasticsearch delete failed: " + e.getMessage());
+        }
+    }
 }

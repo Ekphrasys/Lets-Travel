@@ -2,6 +2,7 @@ package com.travel.travel.service;
 
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
+import com.travel.travel.client.UserServiceClient;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -10,9 +11,11 @@ import java.util.*;
 public class Neo4jRecommendationService {
 
     private final Neo4jClient neo4jClient;
+    private final UserServiceClient userServiceClient;
 
-    public Neo4jRecommendationService(Neo4jClient neo4jClient) {
+    public Neo4jRecommendationService(Neo4jClient neo4jClient, UserServiceClient userServiceClient) {
         this.neo4jClient = neo4jClient;
+        this.userServiceClient = userServiceClient;
     }
 
     public void syncTrip(UUID id, String title, String origin, String destination, double price, LocalDate departureDate) {
@@ -39,13 +42,22 @@ public class Neo4jRecommendationService {
 
     public void syncBooking(UUID userId, UUID tripId, boolean cancelled) {
         try {
+            var profile = userServiceClient.getById(userId);
             neo4jClient.query("""
                     MERGE (u:User {id: $userId})
+                    SET u.email = $email,
+                        u.firstName = $firstName,
+                        u.lastName = $lastName,
+                        u.role = $role
                     MERGE (t:Trip {id: $tripId})
                     MERGE (u)-[r:SUBSCRIBED]->(t)
                     SET r.cancelled = $cancelled
                     """)
                     .bind(userId.toString()).to("userId")
+                    .bind(profile.email()).to("email")
+                    .bind(profile.firstName()).to("firstName")
+                    .bind(profile.lastName()).to("lastName")
+                    .bind(profile.role()).to("role")
                     .bind(tripId.toString()).to("tripId")
                     .bind(cancelled).to("cancelled")
                     .run();
@@ -56,13 +68,22 @@ public class Neo4jRecommendationService {
 
     public void syncFeedback(UUID userId, UUID tripId, int rating) {
         try {
+            var profile = userServiceClient.getById(userId);
             neo4jClient.query("""
                     MERGE (u:User {id: $userId})
+                    SET u.email = $email,
+                        u.firstName = $firstName,
+                        u.lastName = $lastName,
+                        u.role = $role
                     MERGE (t:Trip {id: $tripId})
                     MERGE (u)-[r:GAVE_FEEDBACK]->(t)
                     SET r.rating = $rating
                     """)
                     .bind(userId.toString()).to("userId")
+                    .bind(profile.email()).to("email")
+                    .bind(profile.firstName()).to("firstName")
+                    .bind(profile.lastName()).to("lastName")
+                    .bind(profile.role()).to("role")
                     .bind(tripId.toString()).to("tripId")
                     .bind(rating).to("rating")
                     .run();
@@ -124,6 +145,19 @@ public class Neo4jRecommendationService {
         } catch (Exception e) {
             System.err.println("Neo4j recommendations failed: " + e.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    public void deleteTrip(UUID id) {
+        try {
+            neo4jClient.query("""
+                    MATCH (t:Trip {id: $id})
+                    DETACH DELETE t
+                    """)
+                    .bind(id.toString()).to("id")
+                    .run();
+        } catch (Exception e) {
+            System.err.println("Neo4j deleteTrip failed: " + e.getMessage());
         }
     }
 }

@@ -125,6 +125,10 @@ public class TripService {
         }
 
         tripRepository.delete(trip);
+
+        // Sync delete to Elasticsearch and Neo4j
+        elasticsearchService.deleteTrip(id);
+        neo4jRecommendationService.deleteTrip(id);
     }
 
     public List<Trip> getAllTripEntities() {
