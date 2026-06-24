@@ -1,0 +1,66 @@
+<div class="page">
+  <a routerLink="/manager/trips" class="back-link">← Mes voyages</a>
+
+  @if (trip(); as t) {
+    <h1>Abonnés — {{ t.title }}</h1>
+    <p class="subtitle">{{ t.originCity }} → {{ t.destinationCity }} · {{ t.departureDate }}</p>
+  }
+
+  @if (loading()) {
+    <p class="loading">Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (rows().length === 0) {
+    <p class="empty">Aucun abonné pour ce voyage.</p>
+  } @else {
+    <p class="count">{{ rows().length }} abonné(s)</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Prénom</th>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.booking.id) {
+          <tr>
+            <td>{{ row.user?.firstName ?? '—' }}</td>
+            <td>{{ row.user?.lastName ?? '—' }}</td>
+            <td>{{ row.user?.email ?? row.booking.userId }}</td>
+            <td>
+              <span class="badge"
+                [class.confirmed]="row.booking.status === 'CONFIRMED'"
+                [class.cancelled]="row.booking.status === 'CANCELLED'"
+                [class.pending]="row.booking.status === 'PENDING'">
+                {{ row.booking.status }}
+              </span>
+            </td>
+            <td>{{ row.booking.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td class="actions">
+              <button class="btn-sm secondary" (click)="toggleProfile(row)">
+                {{ row.showProfile ? 'Masquer' : 'Profil' }}
+              </button>
+              @if (row.booking.status !== 'CANCELLED') {
+                <button class="btn-sm danger" (click)="unsubscribe(row)">Désabonner</button>
+              }
+            </td>
+          </tr>
+          @if (row.showProfile && row.user) {
+            <tr class="profile-row">
+              <td colspan="6">
+                <div class="profile-card">
+                  <div class="profile-field"><span class="label">Rôle</span><span>{{ row.user.role }}</span></div>
+                  <div class="profile-field"><span class="label">ID</span><span class="mono">{{ row.user.id }}</span></div>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>
