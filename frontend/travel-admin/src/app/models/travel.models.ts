@@ -99,3 +99,36 @@ export interface TripAnalytics {
   averageRating: number;
   feedbackCount: number;
 }
+
+export interface ManagerTripSummary {
+  id: string;
+  title: string;
+  originCity: string;
+  destinationCity: string;
+  departureDate: string;
+  price: number;
+  status: string;
+  confirmedBookings: number;
+  averageRating: number;
+  feedbackCount: number;
+}
+
+export interface ManagerProfile {
+  managerId: string;
+  firstName: string;
+  lastName: string;
+  totalTrips: number;
+  totalTravelers: number;
+  averageRating: number;
+  reportCount: number;
+  trips: ManagerTripSummary[];
+}
+
+export interface ReportDetail {
+  id: string;
+  reporterId: string;
+  reporterFirstName: string;
+  reporterLastName: string;
+  reason: string;
+  createdAt: string;
+}

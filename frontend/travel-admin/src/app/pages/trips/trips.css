@@ -92,6 +92,16 @@
   color: #c53030 !important;
 }
 
+.manager-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.manager-link:hover { text-decoration: underline; }
+
 .cutoff-notice {
   font-size: 0.8rem;
   color: #975a16;

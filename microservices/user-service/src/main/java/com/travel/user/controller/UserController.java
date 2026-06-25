@@ -38,6 +38,12 @@ public class UserController {
         return userService.getByEmail(email);
     }
 
+    @GetMapping("/internal/{id}")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public UserResponse byIdInternal(@PathVariable UUID id) {
+        return userService.getById(id);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)

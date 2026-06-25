@@ -12,6 +12,9 @@
       @if (auth.isManagerOrAdmin()) {
         <a routerLink="/manager/dashboard" routerLinkActive="active">Tableau de bord</a>
         <a routerLink="/manager/trips" routerLinkActive="active">Mes voyages</a>
+        @if (auth.isTravelManager()) {
+          <a [routerLink]="['/managers', auth.currentUser()?.sub]" routerLinkActive="active">Mon profil</a>
+        }
       }
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" routerLinkActive="active">Utilisateurs</a>

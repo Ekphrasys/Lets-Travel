@@ -18,6 +18,9 @@
         <p class="date">{{ trip.departureDate | date:'longDate' }}</p>
         <p class="price">{{ trip.price | currency:'EUR' }}</p>
         <p class="seats">{{ trip.seatsAvailable }} places · {{ trip.status }}</p>
+        @if (trip.managerId) {
+          <a [routerLink]="['/managers', trip.managerId]" class="manager-link">👤 Voir le profil du manager</a>
+        }
         <div class="actions">
           @if (auth.isAuthenticated() && trip.seatsAvailable > 0 && trip.status === 'ACTIVE') {
             @if (canBook(trip)) {
