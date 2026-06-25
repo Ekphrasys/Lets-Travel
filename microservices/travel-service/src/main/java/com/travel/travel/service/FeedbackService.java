@@ -4,6 +4,7 @@ import com.travel.travel.dto.CreateFeedbackRequest;
 import com.travel.travel.dto.FeedbackResponse;
 import com.travel.travel.model.Feedback;
 import com.travel.travel.model.Trip;
+import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.TripRepository;
 import org.springframework.http.HttpStatus;
@@ -19,16 +20,29 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final TripRepository tripRepository;
+    private final BookingRepository bookingRepository;
 
-    public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository) {
+    public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository,
+                           BookingRepository bookingRepository) {
         this.feedbackRepository = feedbackRepository;
         this.tripRepository = tripRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     @Transactional
     public FeedbackResponse create(UUID userId, CreateFeedbackRequest request) {
         Trip trip = tripRepository.findById(request.tripId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+
+        if (!bookingRepository.existsByTripIdAndUserIdAndStatus(trip.getId(), userId, "CONFIRMED")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Vous devez avoir participé à ce voyage pour laisser un avis");
+        }
+
+        if (feedbackRepository.existsByTripIdAndUserId(trip.getId(), userId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Vous avez déjà laissé un avis pour ce voyage");
+        }
 
         Feedback feedback = new Feedback();
         feedback.setId(UUID.randomUUID());
@@ -37,6 +51,12 @@ public class FeedbackService {
         feedback.setRating(request.rating());
         feedback.setComment(request.comment());
         return toResponse(feedbackRepository.save(feedback));
+    }
+
+    public List<FeedbackResponse> findByUser(UUID userId) {
+        return feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public List<FeedbackResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {

@@ -63,7 +63,7 @@ CREATE TABLE travel.feedbacks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_feedbacks_trip_id ON travel.feedbacks(trip_id);
+CREATE UNIQUE INDEX uq_feedbacks_trip_user ON travel.feedbacks(trip_id, user_id);
 CREATE INDEX idx_feedbacks_user_id ON travel.feedbacks(user_id);
 
 -- payment.payments

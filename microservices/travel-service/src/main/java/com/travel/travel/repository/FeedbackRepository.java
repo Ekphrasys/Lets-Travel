@@ -14,6 +14,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, UUID> {
 
     List<Feedback> findByTripIdIn(List<UUID> tripIds);
 
+    List<Feedback> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    boolean existsByTripIdAndUserId(UUID tripId, UUID userId);
+
     @Query("SELECT f.trip.id, AVG(f.rating), COUNT(f) FROM Feedback f WHERE f.trip.id IN :tripIds GROUP BY f.trip.id")
     List<Object[]> ratingStatsByTripIds(@Param("tripIds") List<UUID> tripIds);
 }

@@ -59,7 +59,7 @@ class BookingControllerTest {
         UUID tripId = UUID.randomUUID();
         when(bookingService.createBooking(eq(userId), any(CreateBookingRequest.class)))
                 .thenReturn(new BookingResponse(bookingId, tripId, userId, "CONFIRMED",
-                        UUID.randomUUID(), Instant.now()));
+                        UUID.randomUUID(), Instant.now(), null));
 
         mockMvc.perform(withUser(post("/api/bookings"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +83,7 @@ class BookingControllerTest {
         UUID bookingId = UUID.randomUUID();
         when(bookingService.cancelBooking(eq(bookingId), eq(userId), eq(false)))
                 .thenReturn(new BookingResponse(bookingId, UUID.randomUUID(), userId, "CANCELLED",
-                        null, Instant.now()));
+                        null, Instant.now(), null));
 
         mockMvc.perform(withUser(delete("/api/bookings/{id}", bookingId)))
                 .andExpect(status().isOk())

@@ -93,6 +93,7 @@ class BookingServiceTest {
     void cancelBooking_forbiddenForOtherUser() {
         UUID bookingId = UUID.randomUUID();
         Booking booking = booking(UUID.randomUUID(), "CONFIRMED");
+        booking.setTrip(activeTrip(UUID.randomUUID(), 1, BigDecimal.TEN));
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
 
         assertThatThrownBy(() -> bookingService.cancelBooking(bookingId, UUID.randomUUID(), false))
@@ -127,6 +128,7 @@ class BookingServiceTest {
         UUID bookingId = UUID.randomUUID();
         Booking booking = booking(UUID.randomUUID(), "CANCELLED");
         booking.setId(bookingId);
+        booking.setTrip(activeTrip(UUID.randomUUID(), 1, BigDecimal.TEN));
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
 
         assertThatThrownBy(() -> bookingService.cancelBooking(bookingId, booking.getUserId(), false))
@@ -164,7 +166,7 @@ class BookingServiceTest {
         trip.setTitle("Trip");
         trip.setOriginCity("A");
         trip.setDestinationCity("B");
-        trip.setDepartureDate(LocalDate.now());
+        trip.setDepartureDate(LocalDate.now().plusDays(10));
         trip.setPrice(price);
         trip.setSeatsAvailable(seats);
         trip.setStatus("ACTIVE");
