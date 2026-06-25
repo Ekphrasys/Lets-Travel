@@ -71,3 +71,7 @@
 .card-link.admin {
   border-left: 4px solid #805ad5;
 }
+
+.card-link.manager {
+  border-left: 4px solid #0ea5e9;
+}

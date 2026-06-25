@@ -9,6 +9,10 @@
       <a routerLink="/trips" routerLinkActive="active">Voyages</a>
       <a routerLink="/bookings" routerLinkActive="active">Réservations</a>
       <a routerLink="/routes" routerLinkActive="active">Itinéraires</a>
+      @if (auth.isManagerOrAdmin()) {
+        <a routerLink="/manager/dashboard" routerLinkActive="active">Tableau de bord</a>
+        <a routerLink="/manager/trips" routerLinkActive="active">Mes voyages</a>
+      }
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" routerLinkActive="active">Utilisateurs</a>
         <a routerLink="/admin/payments" routerLinkActive="active">Paiements</a>

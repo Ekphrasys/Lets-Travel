@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record TripResponse(
+public record TripAnalyticsResponse(
         UUID id,
         String title,
         String originCity,
@@ -13,6 +13,9 @@ public record TripResponse(
         BigDecimal price,
         int seatsAvailable,
         String status,
-        UUID managerId
-) {
-}
+        long confirmedBookings,
+        BigDecimal revenue,
+        double occupancyRate,
+        double averageRating,
+        long feedbackCount
+) {}

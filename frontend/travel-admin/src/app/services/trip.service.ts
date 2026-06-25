@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Trip } from '../models/travel.models';
+import type { ManagerStats, Trip, TripAnalytics } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
@@ -13,11 +13,27 @@ export class TripService {
     return this.http.get<Trip[]>(this.base);
   }
 
-  create(trip: Omit<Trip, 'id' | 'status'>): Observable<Trip> {
+  getById(id: string): Observable<Trip> {
+    return this.http.get<Trip>(`${this.base}/${id}`);
+  }
+
+  myTrips(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/my`);
+  }
+
+  myStats(): Observable<ManagerStats> {
+    return this.http.get<ManagerStats>(`${this.base}/stats`);
+  }
+
+  myAnalytics(): Observable<TripAnalytics[]> {
+    return this.http.get<TripAnalytics[]>(`${this.base}/analytics`);
+  }
+
+  create(trip: Omit<Trip, 'id' | 'status' | 'managerId'>): Observable<Trip> {
     return this.http.post<Trip>(this.base, trip);
   }
 
-  update(id: string, trip: Omit<Trip, 'id' | 'status'>): Observable<Trip> {
+  update(id: string, trip: Omit<Trip, 'id' | 'status' | 'managerId'>): Observable<Trip> {
     return this.http.put<Trip>(`${this.base}/${id}`, trip);
   }
 

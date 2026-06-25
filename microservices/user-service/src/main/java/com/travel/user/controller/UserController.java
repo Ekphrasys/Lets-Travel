@@ -57,7 +57,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id.toString() == authentication.name")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER') or #id.toString() == authentication.name")
     public UserResponse getById(@PathVariable UUID id) {
         return userService.getById(id);
     }
