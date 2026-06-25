@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +39,10 @@ public class BookingService {
         if (!"ACTIVE".equals(trip.getStatus()) || trip.getSeatsAvailable() <= 0) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Plus de places disponibles");
         }
+        if (ChronoUnit.DAYS.between(LocalDate.now(), trip.getDepartureDate()) <= 3) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Réservation impossible : le départ est dans moins de 3 jours");
+        }
 
         Booking booking = new Booking();
         booking.setId(UUID.randomUUID());
@@ -62,12 +68,14 @@ public class BookingService {
         throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Paiement refusé");
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByUser(UUID userId) {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
         Trip trip = tripService.getTripEntity(tripId);
         if (!isAdmin && !callerId.equals(trip.getManagerId())) {
@@ -88,6 +96,12 @@ public class BookingService {
         }
         if ("CANCELLED".equals(booking.getStatus())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà annulée");
+        }
+        // Apply 3-day cutoff only for self-service cancellations (not admin/manager management actions)
+        boolean isSelfCancel = booking.getUserId().equals(callerId) && !isAdmin && !isManager;
+        if (isSelfCancel && ChronoUnit.DAYS.between(LocalDate.now(), booking.getTrip().getDepartureDate()) <= 3) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Annulation impossible : le départ est dans moins de 3 jours");
         }
 
         if ("CONFIRMED".equals(booking.getStatus())) {
@@ -110,7 +124,8 @@ public class BookingService {
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getPaymentId(),
-                booking.getCreatedAt()
+                booking.getCreatedAt(),
+                booking.getTrip().getDepartureDate()
         );
     }
 }

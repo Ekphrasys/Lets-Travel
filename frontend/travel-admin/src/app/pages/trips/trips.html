@@ -20,7 +20,11 @@
         <p class="seats">{{ trip.seatsAvailable }} places · {{ trip.status }}</p>
         <div class="actions">
           @if (auth.isAuthenticated() && trip.seatsAvailable > 0 && trip.status === 'ACTIVE') {
-            <button (click)="book(trip.id)">Réserver</button>
+            @if (canBook(trip)) {
+              <button (click)="book(trip.id)">Réserver</button>
+            } @else {
+              <span class="cutoff-notice">Réservations fermées (départ dans moins de 3 jours)</span>
+            }
           }
           @if (auth.isAdmin()) {
             <a [routerLink]="['/trips', trip.id, 'edit']" class="btn-edit">Modifier</a>

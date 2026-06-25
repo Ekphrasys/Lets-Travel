@@ -91,3 +91,11 @@
   background: #fed7d7 !important;
   color: #c53030 !important;
 }
+
+.cutoff-notice {
+  font-size: 0.8rem;
+  color: #975a16;
+  background: #fefcbf;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}

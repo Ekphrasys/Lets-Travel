@@ -38,6 +38,12 @@ export class TripsComponent implements OnInit {
     });
   }
 
+  canBook(trip: Trip): boolean {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + 3);
+    return new Date(trip.departureDate) > cutoff;
+  }
+
   deleteTrip(id: string): void {
     if (!confirm('Supprimer ce voyage ?')) return;
     this.tripService.delete(id).subscribe(() => this.load());

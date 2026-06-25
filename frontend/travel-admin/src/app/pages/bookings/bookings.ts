@@ -71,6 +71,13 @@ export class BookingsComponent implements OnInit {
     });
   }
 
+  canCancel(booking: Booking): boolean {
+    if (!booking.tripDepartureDate) return true;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + 3);
+    return new Date(booking.tripDepartureDate) > cutoff;
+  }
+
   hasSubmitted(bookingId: string): boolean {
     return this.submittedBookingIds().has(bookingId);
   }

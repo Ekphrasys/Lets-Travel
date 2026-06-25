@@ -32,6 +32,7 @@ export interface Booking {
   status: string;
   paymentId?: string;
   createdAt: string;
+  tripDepartureDate?: string;
 }
 
 export interface RoutePath {

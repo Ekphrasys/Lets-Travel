@@ -1,6 +1,7 @@
 package com.travel.travel.dto;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record BookingResponse(
@@ -9,6 +10,7 @@ public record BookingResponse(
         UUID userId,
         String status,
         UUID paymentId,
-        Instant createdAt
+        Instant createdAt,
+        LocalDate tripDepartureDate
 ) {
 }

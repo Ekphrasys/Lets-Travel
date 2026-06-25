@@ -23,7 +23,11 @@
           <td>{{ b.createdAt | date:'short' }}</td>
           <td class="actions-cell">
             @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
-              <button class="btn-cancel" (click)="cancel(b.id)">Annuler</button>
+              @if (canCancel(b)) {
+                <button class="btn-cancel" (click)="cancel(b.id)">Annuler</button>
+              } @else {
+                <span class="cutoff-notice">Annulation impossible (départ &lt; 3 jours)</span>
+              }
             }
             @if (b.status === 'CONFIRMED' && !hasSubmitted(b.id)) {
               <button class="btn-feedback" (click)="openFeedback(b.id)">⭐ Laisser un avis</button>
