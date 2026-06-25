@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "feedbacks")
+@Table(name = "feedbacks", schema = "travel")
 public class Feedback {
 
     @Id
@@ -34,20 +34,62 @@ public class Feedback {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public Trip getTrip() { return trip; }
-    public void setTrip(Trip trip) { this.trip = trip; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
+    public Trip getTrip() {
+        return trip;
+    }
 
-    public int getRating() { return rating; }
-    public void setRating(int rating) { this.rating = rating; }
+    public void setTrip(Trip trip) {
+        this.trip = trip;
+    }
 
-    public String getComment() { return comment; }
-    public void setComment(String comment) { this.comment = comment; }
+    public UUID getTripId() {
+        return trip != null ? trip.getId() : null;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
+    public void setTripId(UUID tripId) {
+        if (this.trip == null) {
+            this.trip = new Trip();
+        }
+        this.trip.setId(tripId);
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 }

@@ -6,6 +6,12 @@ import com.travel.travel.dto.RouteResponse;
 import com.travel.travel.dto.TripResponse;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
+import com.travel.travel.service.ElasticsearchService;
+import com.travel.travel.service.Neo4jRecommendationService;
+import com.travel.travel.service.BookingService;
+import com.travel.travel.repository.FeedbackRepository;
+import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.client.UserServiceClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -38,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class TripControllerTest {
 
-    private static final String ADMIN_ID = "00000000-0000-0000-0000-000000000001";
+    private static final String ADMIN_ID = "550e8400-e29b-41d4-a716-446655440001";
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,6 +58,24 @@ class TripControllerTest {
 
     @MockBean
     private RouteSearchService routeSearchService;
+
+    @MockBean
+    private ElasticsearchService elasticsearchService;
+
+    @MockBean
+    private Neo4jRecommendationService neo4jRecommendationService;
+
+    @MockBean
+    private BookingService bookingService;
+
+    @MockBean
+    private FeedbackRepository feedbackRepository;
+
+    @MockBean
+    private BookingRepository bookingRepository;
+
+    @MockBean
+    private UserServiceClient userServiceClient;
 
     private static MockHttpServletRequestBuilder withAdmin(MockHttpServletRequestBuilder builder) {
         return builder.with(request -> {

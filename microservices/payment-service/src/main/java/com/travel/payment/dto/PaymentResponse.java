@@ -10,6 +10,7 @@ public record PaymentResponse(
         UUID userId,
         BigDecimal amount,
         String status,
+        String paymentMethod,
         Instant createdAt
 ) {
 }

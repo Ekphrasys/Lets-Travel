@@ -28,6 +28,12 @@ class TripServiceTest {
     @Mock
     private TripRepository tripRepository;
 
+    @Mock
+    private ElasticsearchService elasticsearchService;
+
+    @Mock
+    private Neo4jRecommendationService neo4jRecommendationService;
+
     @InjectMocks
     private TripService tripService;
 
@@ -96,12 +102,12 @@ class TripServiceTest {
     @Test
     void delete_success() {
         UUID id = UUID.randomUUID();
-        Trip existing = trip(id);
-        when(tripRepository.findById(id)).thenReturn(Optional.of(existing));
+        Trip trip = trip(id);
+        when(tripRepository.findById(id)).thenReturn(Optional.of(trip));
 
         tripService.delete(id, UUID.randomUUID(), true);
 
-        verify(tripRepository).deleteById(id);
+        verify(tripRepository).delete(trip);
     }
 
     private static CreateTripRequest sampleRequest() {

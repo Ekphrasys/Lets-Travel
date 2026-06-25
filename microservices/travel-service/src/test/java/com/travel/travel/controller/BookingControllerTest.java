@@ -63,7 +63,7 @@ class BookingControllerTest {
 
         mockMvc.perform(withUser(post("/api/bookings"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new CreateBookingRequest(tripId))))
+                        .content(objectMapper.writeValueAsString(new CreateBookingRequest(tripId, "CARD"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
