@@ -167,9 +167,12 @@ public class TripController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous ne pouvez laisser un avis que sur un voyage réservé");
         }
 
+        Trip trip = new Trip();
+        trip.setId(id);
+
         Feedback feedback = new Feedback();
         feedback.setId(UUID.randomUUID());
-        feedback.setTripId(id);
+        feedback.setTrip(trip);
         feedback.setUserId(userId);
         feedback.setRating(request.rating());
         feedback.setComment(request.comment());
@@ -180,7 +183,7 @@ public class TripController {
         UserServiceClient.UserProfile profile = userServiceClient.getById(userId);
         return new FeedbackResponse(
                 feedback.getId(),
-                feedback.getTripId(),
+                id,
                 feedback.getUserId(),
                 profile.email(),
                 profile.firstName(),
@@ -198,7 +201,7 @@ public class TripController {
                     UserServiceClient.UserProfile profile = userServiceClient.getById(f.getUserId());
                     return new FeedbackResponse(
                             f.getId(),
-                            f.getTripId(),
+                            f.getTrip().getId(),
                             f.getUserId(),
                             profile.email(),
                             profile.firstName(),
@@ -250,7 +253,7 @@ public class TripController {
                 .map(f -> {
                     UserServiceClient.UserProfile p = userServiceClient.getById(f.getUserId());
                     return new FeedbackResponse(
-                            f.getId(), f.getTripId(), f.getUserId(),
+                            f.getId(), f.getTrip().getId(), f.getUserId(),
                             p.email(), p.firstName(), p.lastName(),
                             f.getRating(), f.getComment(), f.getCreatedAt()
                     );
@@ -322,7 +325,7 @@ public class TripController {
                 .map(f -> {
                     UserServiceClient.UserProfile p = userServiceClient.getById(f.getUserId());
                     return new FeedbackResponse(
-                            f.getId(), f.getTripId(), f.getUserId(),
+                            f.getId(), f.getTrip().getId(), f.getUserId(),
                             p.email(), p.firstName(), p.lastName(),
                             f.getRating(), f.getComment(), f.getCreatedAt()
                     );

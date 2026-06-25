@@ -50,16 +50,6 @@ public class Feedback {
         this.trip = trip;
     }
 
-    public UUID getTripId() {
-        return trip != null ? trip.getId() : null;
-    }
-
-    public void setTripId(UUID tripId) {
-        if (this.trip == null) {
-            this.trip = new Trip();
-        }
-        this.trip.setId(tripId);
-    }
 
     public UUID getUserId() {
         return userId;
