@@ -31,4 +31,6 @@ RUN curl -fsSL "https://github.com/liquibase/liquibase/releases/download/v4.24.0
 
 COPY ci/jenkins/plugins.txt /usr/share/jenkins/ref/plugins.txt
 
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+
 USER jenkins

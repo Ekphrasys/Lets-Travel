@@ -154,7 +154,7 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 sh '''

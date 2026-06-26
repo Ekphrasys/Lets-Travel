@@ -61,13 +61,18 @@ import sys, json
 data = json.load(sys.stdin)
 for g in data.get('qualitygates', []):
      if g.get('name') == '$GATE_NAME':
-         print(g['id'])
+         print(g.get('id', ''))
          break
 " 2>/dev/null || true)
 
 if [[ -z "$QG_ID" ]]; then
    sonar_api POST "qualitygates/create" -d "name=$GATE_NAME" >/dev/null
-   QG_ID=$(sonar_api GET "qualitygates/show" --data-urlencode "name=$GATE_NAME" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+   QG_ID=$(sonar_api GET "qualitygates/show" --data-urlencode "name=$GATE_NAME" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+qg = data.get('qualityGate', data)
+print(qg.get('id', ''))
+")
    echo "Quality Gate créée (id=$QG_ID)"
 else
    echo "Quality Gate existante (id=$QG_ID)"
@@ -76,8 +81,9 @@ fi
 echo "=== Configuration Quality Gate conditions ==="
 mapfile -t _qg_cond_ids < <(sonar_api GET "qualitygates/show" --data-urlencode "name=$GATE_NAME" | python3 -c "
 import sys, json
-for c in json.load(sys.stdin).get('conditions', []):
-     print(c['id'])
+data = json.load(sys.stdin)
+for c in data.get('qualityGate', data).get('conditions', []):
+     print(c.get('id', ''))
 ")
 for cond_id in "${_qg_cond_ids[@]}"; do
    [[ -n "$cond_id" ]] || continue
@@ -102,9 +108,9 @@ PRESERVE_GIT_USERNAME=""
 PRESERVE_GIT_TOKEN=""
 PRESERVE_NEO4J_PASSWORD=""
 if [[ -f "$ENV_CI_FILE" ]]; then
-   PRESERVE_GIT_USERNAME=$(grep -E '^GIT_USERNAME=' "$ENV_CI_FILE" | cut -d= -f2- || true)
-   PRESERVE_GIT_TOKEN=$(grep -E '^GIT_TOKEN=' "$ENV_CI_FILE" | cut -d= -f2- || true)
-   PRESERVE_NEO4J_PASSWORD=$(grep -E '^NEO4J_PASSWORD=' "$ENV_CI_FILE" | cut -d= -f2- || true)
+   PRESERVE_GIT_USERNAME=$(grep -E '^GIT_USERNAME=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
+   PRESERVE_GIT_TOKEN=$(grep -E '^GIT_TOKEN=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
+   PRESERVE_NEO4J_PASSWORD=$(grep -E '^NEO4J_PASSWORD=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
 fi
 
 cat > "$ENV_CI_FILE" <<EOF

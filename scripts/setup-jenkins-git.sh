@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-GIT_REMOTE="${GIT_REMOTE:-https://zone01normandie.org/git/ajoly/Lets-travel.git}"
+GIT_REMOTE="${GIT_REMOTE:-https://github.com/Ekphrasys/Lets-Travel.git}"
 ENV_FILE="$ROOT/.env.ci"
 
 read_git_credentials_from_store() {
@@ -19,7 +19,6 @@ read_git_credentials_from_store() {
      [[ "$host" == *"@"* ]] || continue
      user="${host%%@*}"
      host="${host#*@}"
-     [[ "$host" == zone01normandie.org* ]] || continue
      pass="${user#*:}"
      user="${user%%:*}"
      [[ -n "$user" && -n "$pass" ]] || continue
@@ -35,8 +34,8 @@ if [[ -z "${GIT_USERNAME:-}" || -z "${GIT_TOKEN:-}" ]]; then
      echo "Credentials Git lus depuis ~/.git-credentials (utilisateur: $GIT_USERNAME)"
    else
      echo "Credentials Git requis pour cloner $GIT_REMOTE"
-     read -r -p "Utilisateur Git [ajoly]: " GIT_USERNAME
-     GIT_USERNAME="${GIT_USERNAME:-ajoly}"
+     read -r -p "Utilisateur Git [Ekphrasys]: " GIT_USERNAME
+     GIT_USERNAME="${GIT_USERNAME:-Ekphrasys}"
      read -r -s -p "Token ou mot de passe Git: " GIT_TOKEN
      echo
      [[ -n "$GIT_TOKEN" ]] || { echo "ERREUR: token vide"; exit 1; }
@@ -47,9 +46,9 @@ PRESERVE_SONAR_TOKEN=""
 PRESERVE_SONAR_ADMIN_PASSWORD=""
 PRESERVE_NEO4J_PASSWORD=""
 if [[ -f "$ENV_FILE" ]]; then
-   PRESERVE_SONAR_TOKEN=$(grep -E '^SONAR_TOKEN=' "$ENV_FILE" | cut -d= -f2- || true)
-   PRESERVE_SONAR_ADMIN_PASSWORD=$(grep -E '^SONAR_ADMIN_PASSWORD=' "$ENV_FILE" | cut -d= -f2- || true)
-   PRESERVE_NEO4J_PASSWORD=$(grep -E '^NEO4J_PASSWORD=' "$ENV_FILE" | cut -d= -f2- || true)
+   PRESERVE_SONAR_TOKEN=$(grep -E '^SONAR_TOKEN=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)
+   PRESERVE_SONAR_ADMIN_PASSWORD=$(grep -E '^SONAR_ADMIN_PASSWORD=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)
+   PRESERVE_NEO4J_PASSWORD=$(grep -E '^NEO4J_PASSWORD=' "$ENV_FILE" | tail -1 | cut -d= -f2- || true)
 fi
 
 grep -v '^GIT_USERNAME=' "$ENV_FILE" 2>/dev/null | grep -v '^GIT_TOKEN=' > "${ENV_FILE}.tmp" || true
@@ -69,11 +68,12 @@ if [[ -n "$PRESERVE_NEO4J_PASSWORD" ]]; then
 fi
 chmod 600 "$ENV_FILE"
 
-echo "=== Test clone Git (master) ==="
+echo "=== Test clone Git ==="
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
-GIT_TERMINAL_PROMPT=0 git clone --depth 1 -b master \
-   "https://${GIT_USERNAME}:${GIT_TOKEN}@zone01normandie.org/git/ajoly/Lets-travel.git" \
+CLONE_URL="${GIT_REMOTE/https:\/\//https:\/\/${GIT_USERNAME}:${GIT_TOKEN}@}"
+GIT_TERMINAL_PROMPT=0 git clone --depth 1 \
+   "$CLONE_URL" \
    "$TMP_DIR/repo" >/dev/null
 echo "Clone OK"
 

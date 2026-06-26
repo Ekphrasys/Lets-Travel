@@ -72,10 +72,10 @@ jobs:
             scm {
               git {
                 remote {
-                  url('https://zone01normandie.org/git/ajoly/Lets-travel.git')
+                  url('https://github.com/Ekphrasys/Lets-Travel.git')
                   credentials('git-travel-repo')
                 }
-                branches('*/master')
+                branches('*/main')
                 extensions {
                   cleanBeforeCheckout()
                   cloneOptions {
