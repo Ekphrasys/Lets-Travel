@@ -40,4 +40,12 @@ export class TripService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
+
+  search(q: string): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/search`, { params: { q } });
+  }
+
+  autocomplete(q: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.base}/autocomplete`, { params: { q } });
+  }
 }

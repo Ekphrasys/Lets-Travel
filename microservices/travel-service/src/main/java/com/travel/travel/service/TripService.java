@@ -8,6 +8,9 @@ import com.travel.travel.model.Trip;
 import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.TripRepository;
+import com.travel.travel.search.TripSearchService;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +28,19 @@ public class TripService {
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
+    private final TripSearchService tripSearchService;
 
-    public TripService(TripRepository tripRepository, BookingRepository bookingRepository, FeedbackRepository feedbackRepository) {
+    public TripService(TripRepository tripRepository, BookingRepository bookingRepository,
+                       FeedbackRepository feedbackRepository, TripSearchService tripSearchService) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.tripSearchService = tripSearchService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void reindexOnStartup() {
+        tripSearchService.reindexAll(tripRepository.findAll());
     }
 
     public List<TripResponse> findAll() {
@@ -107,7 +118,9 @@ public class TripService {
         trip.setSeatsAvailable(request.seatsAvailable());
         trip.setStatus("ACTIVE");
         trip.setManagerId(managerId);
-        return toResponse(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        tripSearchService.indexTrip(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -123,7 +136,9 @@ public class TripService {
         trip.setDepartureDate(request.departureDate());
         trip.setPrice(request.price());
         trip.setSeatsAvailable(request.seatsAvailable());
-        return toResponse(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        tripSearchService.indexTrip(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -134,6 +149,7 @@ public class TripService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         tripRepository.deleteById(id);
+        tripSearchService.removeTrip(id);
     }
 
     Trip getTripEntity(UUID id) {

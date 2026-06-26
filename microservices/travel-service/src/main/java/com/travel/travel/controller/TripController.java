@@ -5,6 +5,7 @@ import com.travel.travel.dto.ManagerStatsResponse;
 import com.travel.travel.dto.RouteResponse;
 import com.travel.travel.dto.TripAnalyticsResponse;
 import com.travel.travel.dto.TripResponse;
+import com.travel.travel.search.TripSearchService;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
 import jakarta.validation.Valid;
@@ -23,15 +24,28 @@ public class TripController {
 
     private final TripService tripService;
     private final RouteSearchService routeSearchService;
+    private final TripSearchService tripSearchService;
 
-    public TripController(TripService tripService, RouteSearchService routeSearchService) {
+    public TripController(TripService tripService, RouteSearchService routeSearchService,
+                          TripSearchService tripSearchService) {
         this.tripService = tripService;
         this.routeSearchService = routeSearchService;
+        this.tripSearchService = tripSearchService;
     }
 
     @GetMapping
     public List<TripResponse> listAll() {
         return tripService.findAll();
+    }
+
+    @GetMapping("/search")
+    public List<TripResponse> search(@RequestParam String q) {
+        return tripSearchService.search(q);
+    }
+
+    @GetMapping("/autocomplete")
+    public List<String> autocomplete(@RequestParam String q) {
+        return tripSearchService.autocomplete(q);
     }
 
     @GetMapping("/my")
