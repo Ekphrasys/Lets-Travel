@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { CreateUserPayload, Payment, UpdatePaymentPayload, UpdateUserPayload, User } from '../models/travel.models';
+import { CreateUserPayload, Payment, UpdatePaymentPayload, UpdateUserPayload, User, UserStats } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -67,4 +67,9 @@ export class AdminService {
   listManagers(): Observable<User[]> {
     return this.http.get<User[]>(`${environment.apiUrl}/api/users/managers`);
   }
+
+  getUserStats(userId: string): Observable<UserStats> {
+    return this.http.get<UserStats>(`${environment.apiUrl}/api/users/${userId}/stats`);
+  }
 }
+

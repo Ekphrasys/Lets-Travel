@@ -67,3 +67,12 @@ export interface UpdatePaymentPayload {
   amount: number;
   status: string;
 }
+
+export interface UserStats {
+  pastTravelParticipation: number;
+  reportsFiled: number;
+  reportsReceived: number;
+  subscriptionCancellations: number;
+  preferredPaymentMethod: string;
+}
+

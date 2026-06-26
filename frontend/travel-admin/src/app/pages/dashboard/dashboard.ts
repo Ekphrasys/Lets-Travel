@@ -52,10 +52,24 @@ export class DashboardComponent implements OnInit {
   adminDashboardData = signal<any>(null);
   adminReports = signal<any[]>([]);
 
+  // Tab control
+  activeTab = signal<string>('dashboard');
+
+  // Expanded trips in Admin history
+  expandedTripId = signal<string | null>(null);
+  tripFeedbacks = signal<any[]>([]);
+
+  // System-wide feedbacks for Admin
+  systemFeedbacks = signal<any[]>([]);
+
+  // Individual statistics
+  individualStats = signal<any>(null);
+
   // UI state
   loading = false;
   successMessage = '';
   errorMessage = '';
+
 
   ngOnInit(): void {
     const user = this.auth.currentUser();
@@ -63,14 +77,20 @@ export class DashboardComponent implements OnInit {
 
     this.tripService.list().subscribe((t: Trip[]) => this.trips.set(t));
 
+    // Load common traveler features for everyone (for traveler mode & general fallback stats)
+    this.loadTravelerData(user.sub);
+
     if (this.auth.isAdmin()) {
       this.loadAdminData();
+      this.loadIndividualStats(user.sub);
     } else if (this.auth.isManager()) {
       this.loadManagerData(user.sub);
+      this.loadIndividualStats(user.sub);
     } else {
-      this.loadTravelerData(user.sub);
+      this.activeTab.set('search');
     }
   }
+
 
   // --- Traveler Logic ---
   loadTravelerData(userId: string): void {
@@ -183,6 +203,12 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  getAverageRating(feedbacks: any[]): number {
+    if (!feedbacks || feedbacks.length === 0) return 0;
+    const sum = feedbacks.reduce((acc, f) => acc + f.rating, 0);
+    return sum / feedbacks.length;
+  }
+
   // --- Manager Logic ---
   loadManagerData(managerId: string): void {
     this.tripService.managerDashboard(managerId).subscribe((data: any) => this.managerDashboardData.set(data));
@@ -213,6 +239,32 @@ export class DashboardComponent implements OnInit {
   loadAdminData(): void {
     this.tripService.adminDashboard().subscribe((data: any) => this.adminDashboardData.set(data));
     this.adminService.listReports().subscribe((reports: any[]) => this.adminReports.set(reports));
+    this.loadSystemFeedbacks();
+  }
+
+  loadSystemFeedbacks(): void {
+    this.tripService.allFeedbacks().subscribe((f: any[]) => this.systemFeedbacks.set(f));
+  }
+
+  toggleTripFeedbacks(tripId: string): void {
+    if (this.expandedTripId() === tripId) {
+      this.expandedTripId.set(null);
+      this.tripFeedbacks.set([]);
+    } else {
+      this.expandedTripId.set(tripId);
+      this.tripService.feedbacks(tripId).subscribe((f: any[]) => this.tripFeedbacks.set(f));
+    }
+  }
+
+  loadIndividualStats(userId: string): void {
+    this.adminService.getUserStats(userId).subscribe({
+      next: (stats) => {
+        this.individualStats.set(stats);
+      },
+      error: () => {
+        // Fallback or ignore
+      }
+    });
   }
 
   resolveReport(reportId: string): void {

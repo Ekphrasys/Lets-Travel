@@ -185,6 +185,40 @@ public class TripController {
                 .toList();
     }
 
+    @GetMapping("/feedbacks")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<FeedbackResponse> allFeedbacks() {
+        return feedbackRepository.findAll().stream()
+                .sorted(Comparator.comparing(Feedback::getCreatedAt).reversed())
+                .map(f -> {
+                    String email = "inconnu@travel.com";
+                    String firstName = "Utilisateur";
+                    String lastName = "Inconnu";
+                    try {
+                        UserServiceClient.UserProfile profile = userServiceClient.getById(f.getUserId());
+                        if (profile != null) {
+                            email = profile.email();
+                            firstName = profile.firstName();
+                            lastName = profile.lastName();
+                        }
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    return new FeedbackResponse(
+                            f.getId(),
+                            f.getTripId(),
+                            f.getUserId(),
+                            email,
+                            firstName,
+                            lastName,
+                            f.getRating(),
+                            f.getComment(),
+                            f.getCreatedAt()
+                    );
+                })
+                .toList();
+    }
+
     @GetMapping("/admin/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)

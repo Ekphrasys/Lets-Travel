@@ -60,4 +60,8 @@ export class TripService {
   unsubscribe(tripId: string, userId: string): Observable<void> {
     return this.http.post<void>(`${this.base}/${tripId}/unsubscribe/${userId}`, {});
   }
+
+  allFeedbacks(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/feedbacks`);
+  }
 }

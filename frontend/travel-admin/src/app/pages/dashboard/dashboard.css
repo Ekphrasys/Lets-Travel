@@ -468,3 +468,90 @@
   font-style: italic;
   padding: 2rem;
 }
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #718096;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.tab-btn.active {
+  background: #ebf8ff;
+  color: #2b6cb0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Nested feedback styles for Admin history */
+.nested-row {
+  background-color: #f8fafc;
+}
+
+.nested-feedback-container {
+  padding: 1.5rem;
+  border-left: 4px solid #3182ce;
+  background-color: #ffffff;
+  border-radius: 0 12px 12px 0;
+  margin: 0.5rem 1rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.nested-feedback-container h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #2b6cb0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.nested-feedback-item {
+  border-bottom: 1px solid #edf2f7;
+  padding: 1rem 0;
+}
+
+.nested-feedback-item:last-child {
+  border-bottom: none;
+}
+
+.pill-badge {
+  background: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.additional-stats-box {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e2e8f0;
+}
