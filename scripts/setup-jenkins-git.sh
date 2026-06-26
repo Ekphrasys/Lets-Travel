@@ -68,15 +68,6 @@ mv "${ENV_FILE}.tmp" "$ENV_FILE"
   echo "GIT_TOKEN=$GIT_TOKEN"
   echo "GIT_REMOTE=$GIT_REMOTE"
 } >> "$ENV_FILE"
-if [[ -n "$PRESERVE_SONAR_TOKEN" ]]; then
-   echo "SONAR_TOKEN=$PRESERVE_SONAR_TOKEN" >> "$ENV_FILE"
-fi
-if [[ -n "$PRESERVE_SONAR_ADMIN_PASSWORD" ]]; then
-   echo "SONAR_ADMIN_PASSWORD=$PRESERVE_SONAR_ADMIN_PASSWORD" >> "$ENV_FILE"
-fi
-if [[ -n "$PRESERVE_NEO4J_PASSWORD" ]]; then
-   echo "NEO4J_PASSWORD=$PRESERVE_NEO4J_PASSWORD" >> "$ENV_FILE"
-fi
 chmod 600 "$ENV_FILE"
 
 echo "=== Test clone Git ==="
@@ -90,7 +81,7 @@ url_without_scheme="${url_without_scheme#http://}"
 # Construct authenticated URL for checking SCM clone access
 auth_url="https://${GIT_USERNAME}:${GIT_TOKEN}@${url_without_scheme}"
 
-GIT_TERMINAL_PROMPT=0 git clone --depth 1 -b master "$auth_url" "$TMP_DIR/repo" >/dev/null
+GIT_TERMINAL_PROMPT=0 git clone --depth 1 -b main "$auth_url" "$TMP_DIR/repo" >/dev/null
 echo "Clone OK"
 
 echo "=== Redémarrage Jenkins (JCasC git-travel-repo) ==="
@@ -111,6 +102,6 @@ if [[ -n "$CRUMB" ]]; then
 fi
 
 echo ""
-echo "OK — Jenkins clone master depuis Git (poll SCM toutes les 5 min)"
-echo "  Job : http://localhost:9092/job/travel/"
+echo "OK — Jenkins clone main depuis Git (poll SCM toutes les 5 min)"
+echo "  Job : http://localhost:9092/job/lets-travel/"
 echo ""

@@ -107,10 +107,12 @@ TOKEN=$(sonar_api POST "user_tokens/generate" -d "name=jenkins-lets-travel-$(dat
 PRESERVE_GIT_USERNAME=""
 PRESERVE_GIT_TOKEN=""
 PRESERVE_GIT_REMOTE=""
+PRESERVE_NEO4J_PASSWORD=""
 if [[ -f "$ENV_CI_FILE" ]]; then
-  PRESERVE_GIT_USERNAME=$(grep -E '^GIT_USERNAME=' "$ENV_CI_FILE" | cut -d= -f2- || true)
-  PRESERVE_GIT_TOKEN=$(grep -E '^GIT_TOKEN=' "$ENV_CI_FILE" | cut -d= -f2- || true)
-  PRESERVE_GIT_REMOTE=$(grep -E '^GIT_REMOTE=' "$ENV_CI_FILE" | cut -d= -f2- || true)
+  PRESERVE_GIT_USERNAME=$(grep -E '^GIT_USERNAME=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
+  PRESERVE_GIT_TOKEN=$(grep -E '^GIT_TOKEN=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
+  PRESERVE_GIT_REMOTE=$(grep -E '^GIT_REMOTE=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
+  PRESERVE_NEO4J_PASSWORD=$(grep -E '^NEO4J_PASSWORD=' "$ENV_CI_FILE" | tail -1 | cut -d= -f2- || true)
 fi
 
 cat > "$ENV_CI_FILE" <<EOF
@@ -126,6 +128,9 @@ if [[ -n "$PRESERVE_GIT_USERNAME" && -n "$PRESERVE_GIT_TOKEN" ]]; then
 fi
 if [[ -n "$PRESERVE_GIT_REMOTE" ]]; then
   echo "GIT_REMOTE=$PRESERVE_GIT_REMOTE" >> "$ENV_CI_FILE"
+fi
+if [[ -n "$PRESERVE_NEO4J_PASSWORD" ]]; then
+  echo "NEO4J_PASSWORD=$PRESERVE_NEO4J_PASSWORD" >> "$ENV_CI_FILE"
 fi
 chmod 600 "$ENV_CI_FILE"
 
