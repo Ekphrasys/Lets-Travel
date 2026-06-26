@@ -1,4 +1,4 @@
-# Jenkins plugins — CI/CD + SonarQube (audit)
+# Jenkins plugins — Lets-Travel CI/CD
 workflow-aggregator
 git
 github
@@ -21,3 +21,7 @@ job-dsl
 # Docker deploy
 docker-workflow
 docker-plugin
+
+# Security
+dependency-check-plugin
+warnings-ng

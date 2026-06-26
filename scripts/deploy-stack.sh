@@ -24,35 +24,37 @@ docker ps -aq --filter "label=com.docker.compose.project=travel" | xargs -r dock
 "${COMPOSE[@]}" ps
 
 container_health_status() {
-  local container=$1
-  docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || echo "missing"
+   local container=$1
+   docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || echo "missing"
 }
 
 wait_for_container() {
-  local container=$1 label=$2 max=${3:-30}
-  echo "Attente $label (conteneur $container)..."
-  for _ in $(seq 1 "$max"); do
-    local status
-    status="$(container_health_status "$container")"
-    if [[ "$status" == "healthy" ]]; then
-      echo "OK — $label"
-      return 0
-    fi
-    if [[ "$status" == "running" ]]; then
-      local has_healthcheck
-      has_healthcheck="$(docker inspect --format='{{if .State.Health}}yes{{end}}' "$container" 2>/dev/null || true)"
-      if [[ -z "$has_healthcheck" ]]; then
-        echo "OK — $label (running)"
-        return 0
-      fi
-    fi
-    sleep 10
-  done
-  echo "ERREUR: $label non prêt (conteneur $container, statut: $(container_health_status "$container"))" >&2
-  return 1
+   local container=$1 label=$2 max=${3:-30}
+   echo "Attente $label (conteneur $container)..."
+   for _ in $(seq 1 "$max"); do
+     local status
+     status="$(container_health_status "$container")"
+     if [[ "$status" == "healthy" ]]; then
+       echo "OK — $label"
+       return 0
+     fi
+     if [[ "$status" == "running" ]]; then
+       local has_healthcheck
+       has_healthcheck="$(docker inspect --format='{{if .State.Health}}yes{{end}}' "$container" 2>/dev/null || true)"
+       if [[ -z "$has_healthcheck" ]]; then
+         echo "OK — $label (running)"
+         return 0
+       fi
+     fi
+     sleep 10
+   done
+   echo "ERREUR: $label non prêt (conteneur $container, statut: $(container_health_status "$container"))" >&2
+   return 1
 }
 
 # Depuis Jenkins (conteneur), localhost:8080 ne pointe pas vers la stack sur l'hôte.
 # On s'appuie sur les healthchecks Docker, accessibles via le socket monté.
 wait_for_container "travel-gateway" "API Gateway" 30
 wait_for_container "travel-admin" "Frontend" 18
+wait_for_container "travel-elasticsearch" "Elasticsearch" 12
+wait_for_container "travel-neo4j" "Neo4j" 12
