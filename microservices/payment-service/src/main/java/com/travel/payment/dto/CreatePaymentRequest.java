@@ -9,6 +9,7 @@ import java.util.UUID;
 public record CreatePaymentRequest(
         @NotNull UUID bookingId,
         @NotNull UUID userId,
-        @NotNull @Positive BigDecimal amount
+        @NotNull @Positive BigDecimal amount,
+        String paymentMethod
 ) {
 }

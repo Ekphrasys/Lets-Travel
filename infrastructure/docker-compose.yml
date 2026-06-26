@@ -75,6 +75,22 @@ services:
       -f /seed.cypher
     restart: "no"
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: travel-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - travel-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   discovery-service:
     build: ../microservices/discovery-service
     container_name: travel-discovery
@@ -186,6 +202,7 @@ services:
       ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST:-elasticsearch}
       JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
+      ELASTICSEARCH_HOST: http://elasticsearch:9200
     depends_on:
       postgres:
         condition: service_healthy

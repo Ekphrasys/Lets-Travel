@@ -1,9 +1,9 @@
 package com.travel.user.service;
 
-import com.travel.user.dto.CreateUserRequest;
-import com.travel.user.dto.UpdateUserRequest;
-import com.travel.user.dto.UserResponse;
+import com.travel.user.dto.*;
+import com.travel.user.model.Report;
 import com.travel.user.model.User;
+import com.travel.user.repository.ReportRepository;
 import com.travel.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,9 +17,17 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(
+            UserRepository userRepository,
+            ReportRepository reportRepository,
+            jakarta.persistence.EntityManager entityManager
+    ) {
         this.userRepository = userRepository;
+        this.reportRepository = reportRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -76,5 +84,109 @@ public class UserService {
 
     private UserResponse toResponse(User user) {
         return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole());
+    }
+
+    public List<UserResponse> findManagers() {
+        return userRepository.findAll().stream()
+                .filter(u -> "MANAGER".equalsIgnoreCase(u.getRole()))
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public ReportResponse createReport(UUID reporterId, CreateReportRequest request) {
+        if (!userRepository.existsById(request.reportedId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur signalé introuvable");
+        }
+        Report report = new Report();
+        report.setId(UUID.randomUUID());
+        report.setReporterId(reporterId);
+        report.setReportedId(request.reportedId());
+        report.setTripId(request.tripId());
+        report.setReason(request.reason());
+        report.setStatus("PENDING");
+        report = reportRepository.save(report);
+        return toReportResponse(report);
+    }
+
+    @Transactional
+    public ReportResponse resolveReport(UUID reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Signalement introuvable"));
+        report.setStatus("RESOLVED");
+        report = reportRepository.save(report);
+        return toReportResponse(report);
+    }
+
+    public List<ReportResponse> findAllReports() {
+        return reportRepository.findAll().stream().map(this::toReportResponse).toList();
+    }
+
+    public ReportCountsResponse getReportCounts(UUID userId) {
+        long filed = reportRepository.countByReporterId(userId);
+        long received = reportRepository.countByReportedId(userId);
+        return new ReportCountsResponse(filed, received);
+    }
+
+    @Transactional(readOnly = true)
+    public UserStatsResponse getUserStats(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable");
+        }
+
+        long pastTravelParticipation = 0;
+        try {
+            Number count = (Number) entityManager.createNativeQuery(
+                    "SELECT COUNT(*) FROM travel.bookings WHERE user_id = :userId AND status = 'CONFIRMED'"
+            ).setParameter("userId", userId).getSingleResult();
+            pastTravelParticipation = count.longValue();
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        long subscriptionCancellations = 0;
+        try {
+            Number count = (Number) entityManager.createNativeQuery(
+                    "SELECT COUNT(*) FROM travel.bookings WHERE user_id = :userId AND status = 'CANCELLED'"
+            ).setParameter("userId", userId).getSingleResult();
+            subscriptionCancellations = count.longValue();
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        long reportsFiled = reportRepository.countByReporterId(userId);
+        long reportsReceived = reportRepository.countByReportedId(userId);
+
+        String preferredPaymentMethod = "Aucun";
+        try {
+            List<?> resultList = entityManager.createNativeQuery(
+                    "SELECT payment_method FROM payment.payments WHERE user_id = :userId AND status = 'COMPLETED' GROUP BY payment_method ORDER BY COUNT(*) DESC LIMIT 1"
+            ).setParameter("userId", userId).getResultList();
+            if (!resultList.isEmpty()) {
+                preferredPaymentMethod = resultList.get(0).toString();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        return new UserStatsResponse(
+                pastTravelParticipation,
+                reportsFiled,
+                reportsReceived,
+                subscriptionCancellations,
+                preferredPaymentMethod
+        );
+    }
+
+    private ReportResponse toReportResponse(Report report) {
+        return new ReportResponse(
+                report.getId(),
+                report.getReporterId(),
+                report.getReportedId(),
+                report.getTripId(),
+                report.getReason(),
+                report.getStatus(),
+                report.getCreatedAt()
+        );
     }
 }

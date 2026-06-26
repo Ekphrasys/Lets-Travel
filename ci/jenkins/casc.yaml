@@ -72,7 +72,7 @@ jobs:
             scm {
               git {
                 remote {
-                  url('https://github.com/Ekphrasys/Lets-Travel.git')
+                  url('${GIT_REMOTE}')
                   credentials('git-travel-repo')
                 }
                 branches('*/main')

@@ -28,19 +28,27 @@ class TripServiceTest {
     @Mock
     private TripRepository tripRepository;
 
+    @Mock
+    private ElasticsearchService elasticsearchService;
+
+    @Mock
+    private Neo4jRecommendationService neo4jRecommendationService;
+
     @InjectMocks
     private TripService tripService;
 
     @Test
     void create_persistsActiveTrip() {
         when(tripRepository.save(any(Trip.class))).thenAnswer(inv -> inv.getArgument(0));
+        UUID managerId = UUID.randomUUID();
 
         var response = tripService.create(new CreateTripRequest(
                 "Paris-Lyon", "Paris", "Lyon", LocalDate.of(2026, 12, 1),
-                new BigDecimal("99.00"), 10));
+                new BigDecimal("99.00"), 10), managerId);
 
         assertThat(response.status()).isEqualTo("ACTIVE");
         assertThat(response.title()).isEqualTo("Paris-Lyon");
+        assertThat(response.managerId()).isEqualTo(managerId);
     }
 
     @Test
@@ -65,27 +73,41 @@ class TripServiceTest {
         UUID id = UUID.randomUUID();
         when(tripRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tripService.update(id, sampleRequest()))
+        assertThatThrownBy(() -> tripService.update(id, sampleRequest(), UUID.randomUUID(), true))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void update_forbidden_whenNotOwner() {
+        UUID id = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID callerId = UUID.randomUUID();
+        Trip existing = trip(id);
+        existing.setManagerId(ownerId);
+        when(tripRepository.findById(id)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> tripService.update(id, sampleRequest(), callerId, false))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void delete_notFound() {
         UUID id = UUID.randomUUID();
-        when(tripRepository.existsById(id)).thenReturn(false);
+        when(tripRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tripService.delete(id))
+        assertThatThrownBy(() -> tripService.delete(id, UUID.randomUUID(), true))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
     void delete_success() {
         UUID id = UUID.randomUUID();
-        when(tripRepository.existsById(id)).thenReturn(true);
+        Trip trip = trip(id);
+        when(tripRepository.findById(id)).thenReturn(Optional.of(trip));
 
-        tripService.delete(id);
+        tripService.delete(id, UUID.randomUUID(), true);
 
-        verify(tripRepository).deleteById(id);
+        verify(tripRepository).delete(trip);
     }
 
     private static CreateTripRequest sampleRequest() {

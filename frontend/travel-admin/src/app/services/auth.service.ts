@@ -8,7 +8,7 @@ import { AuthResponse } from '../models/travel.models';
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'MANAGER' | 'TRAVELER';
   exp: number;
 }
 
@@ -53,6 +53,26 @@ export class AuthService {
 
   isAdmin(): boolean {
     return this.currentUser()?.role === 'ADMIN';
+  }
+
+  isTravelManager(): boolean {
+    const role = this.currentUser()?.role;
+    return role === 'TRAVEL_MANAGER' || role === 'MANAGER';
+  }
+
+  isManager(): boolean {
+    const role = this.currentUser()?.role;
+    return role === 'TRAVEL_MANAGER' || role === 'MANAGER';
+  }
+
+  isTraveler(): boolean {
+    const role = this.currentUser()?.role;
+    return role === 'TRAVELER' || role === 'USER';
+  }
+
+  isManagerOrAdmin(): boolean {
+    const role = this.currentUser()?.role;
+    return role === 'ADMIN' || role === 'TRAVEL_MANAGER' || role === 'MANAGER';
   }
 
   getToken(): string | null {

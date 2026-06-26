@@ -1,0 +1,149 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/manager/dashboard" class="back-link">← Tableau de bord</a>
+      <h1>Analytiques & Planification</h1>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="loading">Chargement des données...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (trips().length === 0) {
+    <p class="empty">Aucun voyage trouvé. Créez des voyages pour voir vos analytiques.</p>
+  } @else {
+
+    <!-- Highlights -->
+    @if (highlights(); as h) {
+      <section class="section">
+        <h2>Points forts</h2>
+        <div class="highlights-grid">
+          @if (h.bestRated) {
+            <div class="highlight-card gold">
+              <div class="hl-label">Mieux noté</div>
+              <div class="hl-title">{{ h.bestRated.title }}</div>
+              <div class="hl-sub">{{ h.bestRated.originCity }} → {{ h.bestRated.destinationCity }}</div>
+              <div class="hl-value">{{ stars(h.bestRated.averageRating) }} {{ h.bestRated.averageRating | number:'1.1-1' }}</div>
+            </div>
+          }
+          <div class="highlight-card blue">
+            <div class="hl-label">Plus réservé</div>
+            <div class="hl-title">{{ h.mostBooked.title }}</div>
+            <div class="hl-sub">{{ h.mostBooked.originCity }} → {{ h.mostBooked.destinationCity }}</div>
+            <div class="hl-value">{{ h.mostBooked.confirmedBookings }} réservation(s)</div>
+          </div>
+          <div class="highlight-card green">
+            <div class="hl-label">Meilleur revenu</div>
+            <div class="hl-title">{{ h.topRevenue.title }}</div>
+            <div class="hl-sub">{{ h.topRevenue.originCity }} → {{ h.topRevenue.destinationCity }}</div>
+            <div class="hl-value">{{ h.topRevenue.revenue | number:'1.2-2' }} €</div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Planning insights -->
+    @if (insights().length > 0) {
+      <section class="section">
+        <h2>Recommandations de planification</h2>
+        <ul class="insights-list">
+          @for (tip of insights(); track tip) {
+            <li class="insight-item">
+              <span class="insight-icon">💡</span>
+              <span>{{ tip }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- Rating distribution -->
+    @if (ratingDistribution(); as dist) {
+      <section class="section">
+        <h2>Distribution des notes</h2>
+        <div class="rating-dist">
+          @for (row of dist; track row.star) {
+            <div class="dist-row">
+              <span class="dist-label">{{ row.star }}★</span>
+              <div class="dist-bar-wrap">
+                <div class="dist-bar" [style.width.%]="row.pct"></div>
+              </div>
+              <span class="dist-count">{{ row.count }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Per-trip analytics table -->
+    <section class="section">
+      <div class="table-header">
+        <h2>Performance par voyage</h2>
+        <div class="sort-controls">
+          <span>Trier par :</span>
+          <button [class.active]="sortKey() === 'revenue'" (click)="setSort('revenue')">Revenu</button>
+          <button [class.active]="sortKey() === 'confirmedBookings'" (click)="setSort('confirmedBookings')">Réservations</button>
+          <button [class.active]="sortKey() === 'averageRating'" (click)="setSort('averageRating')">Note</button>
+          <button [class.active]="sortKey() === 'occupancyRate'" (click)="setSort('occupancyRate')">Taux de remplissage</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Voyage</th>
+              <th>Route</th>
+              <th>Prix</th>
+              <th>Réservations</th>
+              <th>Remplissage</th>
+              <th>Revenu</th>
+              <th>Note moy.</th>
+              <th>Avis</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of sortedTrips(); track t.id) {
+              <tr>
+                <td class="trip-title">
+                  <a [routerLink]="['/manager/trips', t.id, 'feedback']">{{ t.title }}</a>
+                </td>
+                <td class="route">{{ t.originCity }} → {{ t.destinationCity }}</td>
+                <td>{{ t.price | number:'1.2-2' }} €</td>
+                <td class="center">{{ t.confirmedBookings }}</td>
+                <td>
+                  <div class="occ-wrap">
+                    <div class="occ-bar">
+                      <div class="occ-fill"
+                           [class.occ-low]="t.occupancyRate < 30"
+                           [class.occ-mid]="t.occupancyRate >= 30 && t.occupancyRate < 70"
+                           [class.occ-high]="t.occupancyRate >= 70"
+                           [style.width.%]="t.occupancyRate"></div>
+                    </div>
+                    <span class="occ-pct">{{ t.occupancyRate | number:'1.0-0' }}%</span>
+                  </div>
+                </td>
+                <td class="revenue">{{ t.revenue | number:'1.2-2' }} €</td>
+                <td class="center">
+                  @if (t.feedbackCount > 0) {
+                    <span class="rating-badge" [class.rating-high]="t.averageRating >= 4" [class.rating-low]="t.averageRating < 3">
+                      {{ t.averageRating | number:'1.1-1' }}★
+                    </span>
+                  } @else {
+                    <span class="no-rating">—</span>
+                  }
+                </td>
+                <td class="center">{{ t.feedbackCount }}</td>
+                <td>
+                  <span class="status-badge" [class.status-active]="t.status === 'ACTIVE'">{{ t.status }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

@@ -47,4 +47,24 @@ export class AdminService {
   deletePayment(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/api/payments/${id}`);
   }
+
+  listReports(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/api/users/reports`);
+  }
+
+  resolveReport(id: string): Observable<any> {
+    return this.http.put<any>(`${environment.apiUrl}/api/users/reports/${id}/resolve`, {});
+  }
+
+  reportUser(payload: { reportedId: string; tripId?: string; reason: string }): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/api/users/reports`, payload);
+  }
+
+  getReportCounts(userId: string): Observable<{ reportsFiled: number; reportsReceived: number }> {
+    return this.http.get<{ reportsFiled: number; reportsReceived: number }>(`${environment.apiUrl}/api/users/${userId}/report-counts`);
+  }
+
+  listManagers(): Observable<User[]> {
+    return this.http.get<User[]>(`${environment.apiUrl}/api/users/managers`);
+  }
 }

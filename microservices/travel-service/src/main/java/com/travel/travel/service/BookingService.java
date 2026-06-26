@@ -20,15 +20,18 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
-            PaymentServiceClient paymentServiceClient
+            PaymentServiceClient paymentServiceClient,
+            Neo4jRecommendationService neo4jRecommendationService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -46,7 +49,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         PaymentServiceClient.PaymentResult payment = paymentServiceClient.createPayment(
-                booking.getId(), userId, trip.getPrice()
+                booking.getId(), userId, trip.getPrice(), request.paymentMethod()
         );
 
         if ("COMPLETED".equals(payment.status())) {
@@ -54,6 +57,10 @@ public class BookingService {
             booking.setPaymentId(payment.id());
             trip.setSeatsAvailable(trip.getSeatsAvailable() - 1);
             tripService.saveTrip(trip);
+            
+            // Sync to Neo4j
+            neo4jRecommendationService.syncBooking(userId, trip.getId(), false);
+            
             return toResponse(bookingRepository.save(booking));
         }
 
@@ -68,16 +75,31 @@ public class BookingService {
                 .toList();
     }
 
+    public List<BookingResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
+        Trip trip = tripService.getTripEntity(tripId);
+        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        return bookingRepository.findByTrip_Id(tripId).stream().map(this::toResponse).toList();
+    }
+
     @Transactional
-    public BookingResponse cancelBooking(UUID bookingId, UUID userId, boolean isAdmin) {
+    public BookingResponse cancelBooking(UUID bookingId, UUID callerId, boolean isAdmin) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation introuvable"));
 
-        if (!isAdmin && !booking.getUserId().equals(userId)) {
+        boolean isManager = booking.getTrip().getManagerId() != null
+                && booking.getTrip().getManagerId().equals(callerId);
+        if (!isAdmin && !isManager && !booking.getUserId().equals(callerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         if ("CANCELLED".equals(booking.getStatus())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà annulée");
+        }
+
+        // 3-day cutoff check
+        if (!isAdmin && java.time.LocalDate.now().plusDays(3).isAfter(booking.getTrip().getDepartureDate())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Annulation impossible moins de 3 jours avant le départ");
         }
 
         if ("CONFIRMED".equals(booking.getStatus())) {
@@ -90,6 +112,10 @@ public class BookingService {
         }
 
         booking.setStatus("CANCELLED");
+        
+        // Sync to Neo4j
+        neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
+        
         return toResponse(bookingRepository.save(booking));
     }
 
