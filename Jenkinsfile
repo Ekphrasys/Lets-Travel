@@ -135,8 +135,8 @@ pipeline {
             steps {
                 sh '''
                     test -f "$DEPLOY_ENV_FILE" || { echo "ERREUR: $DEPLOY_ENV_FILE absent"; exit 1; }
-                    docker compose -f infrastructure/docker-compose.yml --project-name travel-staging down --remove-orphans || true
-                    docker compose -f infrastructure/docker-compose.yml --project-name travel-staging up -d --build
+                    docker ps -aq --filter "label=com.docker.compose.project=travel" | xargs -r docker rm -f || true
+                    docker compose -f infrastructure/docker-compose.yml --project-name travel up -d --build --remove-orphans
                 '''
             }
         }
