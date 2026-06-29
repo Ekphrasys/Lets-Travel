@@ -147,7 +147,7 @@ pipeline {
                     echo "--- Running Integration Tests ---"
                     sh '''
                         sleep 60
-                        bash scripts/audit-api-test.sh staging
+                        API_URL=https://host.docker.internal:8080 bash scripts/audit-api-test.sh staging
                     '''
                 }
             }
