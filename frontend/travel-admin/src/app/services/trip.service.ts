@@ -48,4 +48,8 @@ export class TripService {
   autocomplete(q: string): Observable<string[]> {
     return this.http.get<string[]>(`${this.base}/autocomplete`, { params: { q } });
   }
+
+  suggestions(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/suggestions`);
+  }
 }

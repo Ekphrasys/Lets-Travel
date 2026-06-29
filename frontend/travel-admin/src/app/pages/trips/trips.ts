@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -23,14 +23,21 @@ export class TripsComponent implements OnInit, OnDestroy {
 
   private allTrips = signal<Trip[]>([]);
   trips = signal<Trip[]>([]);
+  suggestedTrips = signal<Trip[]>([]);
   suggestions = signal<string[]>([]);
   showSuggestions = signal(false);
+  suggestionsOpen = signal(true);
   message = signal('');
 
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.load();
+    if (this.auth.isAuthenticated()) {
+      this.tripService.suggestions().subscribe(s =>
+        this.suggestedTrips.set(s.filter(t => this.isBookable(t)))
+      );
+    }
 
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
@@ -89,6 +96,12 @@ export class TripsComponent implements OnInit, OnDestroy {
       },
       error: () => this.message.set('Réservation échouée (plus de places ou paiement refusé).')
     });
+  }
+
+  isBookable(trip: Trip): boolean {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + 3);
+    return trip.status === 'ACTIVE' && trip.seatsAvailable > 0 && new Date(trip.departureDate) > cutoff;
   }
 
   canBook(trip: Trip): boolean {

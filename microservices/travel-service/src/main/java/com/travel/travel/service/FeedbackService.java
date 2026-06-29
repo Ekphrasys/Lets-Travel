@@ -21,12 +21,14 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
+    private final TripGraphService tripGraphService;
 
     public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository,
-                           BookingRepository bookingRepository) {
+                           BookingRepository bookingRepository, TripGraphService tripGraphService) {
         this.feedbackRepository = feedbackRepository;
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
+        this.tripGraphService = tripGraphService;
     }
 
     @Transactional
@@ -50,7 +52,9 @@ public class FeedbackService {
         feedback.setUserId(userId);
         feedback.setRating(request.rating());
         feedback.setComment(request.comment());
-        return toResponse(feedbackRepository.save(feedback));
+        FeedbackResponse response = toResponse(feedbackRepository.save(feedback));
+        tripGraphService.recordFeedback(userId, trip.getId(), request.rating());
+        return response;
     }
 
     public List<FeedbackResponse> findByUser(UUID userId) {

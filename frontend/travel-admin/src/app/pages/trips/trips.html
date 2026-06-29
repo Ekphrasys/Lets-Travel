@@ -38,6 +38,34 @@
     <p class="message">{{ message() }}</p>
   }
 
+  @if (auth.isAuthenticated() && suggestedTrips().length > 0) {
+    <section class="suggestions-section">
+      <button class="suggestions-toggle" (click)="suggestionsOpen.set(!suggestionsOpen())">
+        <span class="suggestions-title">Suggestions pour vous</span>
+        <span class="toggle-icon" [class.open]="suggestionsOpen()">▾</span>
+      </button>
+      @if (suggestionsOpen()) {
+        <div class="trip-grid suggestions-grid">
+          @for (trip of suggestedTrips(); track trip.id) {
+            <div class="trip-card suggested">
+              <h3>{{ trip.title }}</h3>
+              <p class="route">{{ trip.originCity }} → {{ trip.destinationCity }}</p>
+              <p class="date">{{ trip.departureDate | date:'longDate' }}</p>
+              <p class="price">{{ trip.price | currency:'EUR' }}</p>
+              <p class="seats">{{ trip.seatsAvailable }} places</p>
+              @if (trip.managerId) {
+                <a [routerLink]="['/managers', trip.managerId]" class="manager-link">Voir le profil du manager</a>
+              }
+              <div class="actions">
+                <button (click)="book(trip.id)">Réserver</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+
   <div class="trip-grid">
     @for (trip of trips(); track trip.id) {
       <div class="trip-card">

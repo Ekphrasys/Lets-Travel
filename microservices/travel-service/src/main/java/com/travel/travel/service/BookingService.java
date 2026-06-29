@@ -22,15 +22,18 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
+    private final TripGraphService tripGraphService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
-            PaymentServiceClient paymentServiceClient
+            PaymentServiceClient paymentServiceClient,
+            TripGraphService tripGraphService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
+        this.tripGraphService = tripGraphService;
     }
 
     @Transactional
@@ -60,7 +63,9 @@ public class BookingService {
             booking.setPaymentId(payment.id());
             trip.setSeatsAvailable(trip.getSeatsAvailable() - 1);
             tripService.saveTrip(trip);
-            return toResponse(bookingRepository.save(booking));
+            BookingResponse response = toResponse(bookingRepository.save(booking));
+            tripGraphService.recordParticipation(userId, trip);
+            return response;
         }
 
         booking.setStatus("CANCELLED");

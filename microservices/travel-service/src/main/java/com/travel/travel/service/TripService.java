@@ -20,7 +20,9 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TripService {
@@ -29,18 +31,23 @@ public class TripService {
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
     private final TripSearchService tripSearchService;
+    private final TripGraphService tripGraphService;
 
     public TripService(TripRepository tripRepository, BookingRepository bookingRepository,
-                       FeedbackRepository feedbackRepository, TripSearchService tripSearchService) {
+                       FeedbackRepository feedbackRepository, TripSearchService tripSearchService,
+                       TripGraphService tripGraphService) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
         this.tripSearchService = tripSearchService;
+        this.tripGraphService = tripGraphService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void reindexOnStartup() {
-        tripSearchService.reindexAll(tripRepository.findAll());
+        List<Trip> trips = tripRepository.findAll();
+        tripSearchService.reindexAll(trips);
+        tripGraphService.syncAllTrips(trips);
     }
 
     public List<TripResponse> findAll() {
@@ -120,6 +127,7 @@ public class TripService {
         trip.setManagerId(managerId);
         Trip saved = tripRepository.save(trip);
         tripSearchService.indexTrip(saved);
+        tripGraphService.syncTrip(saved);
         return toResponse(saved);
     }
 
@@ -138,6 +146,7 @@ public class TripService {
         trip.setSeatsAvailable(request.seatsAvailable());
         Trip saved = tripRepository.save(trip);
         tripSearchService.indexTrip(saved);
+        tripGraphService.syncTrip(saved);
         return toResponse(saved);
     }
 
@@ -150,6 +159,25 @@ public class TripService {
         }
         tripRepository.deleteById(id);
         tripSearchService.removeTrip(id);
+    }
+
+    public List<TripResponse> getSuggestions(UUID userId) {
+        List<String> suggestedIds = tripGraphService.getSuggestedTripIds(userId);
+        if (suggestedIds.isEmpty()) {
+            return tripRepository.findByStatusOrderByDepartureDateAsc("ACTIVE")
+                    .stream()
+                    .limit(5)
+                    .map(this::toResponse)
+                    .toList();
+        }
+        Map<UUID, Trip> tripMap = tripRepository.findAllById(
+                suggestedIds.stream().map(UUID::fromString).toList()
+        ).stream().collect(Collectors.toMap(Trip::getId, t -> t));
+        return suggestedIds.stream()
+                .map(id -> tripMap.get(UUID.fromString(id)))
+                .filter(Objects::nonNull)
+                .map(this::toResponse)
+                .toList();
     }
 
     Trip getTripEntity(UUID id) {

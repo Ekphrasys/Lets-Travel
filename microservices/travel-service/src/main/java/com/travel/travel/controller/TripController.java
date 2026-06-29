@@ -77,6 +77,13 @@ public class TripController {
         return routeSearchService.search(origin, destination);
     }
 
+    @GetMapping("/suggestions")
+    @PreAuthorize("isAuthenticated()")
+    public List<TripResponse> suggestions(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return tripService.getSuggestions(userId);
+    }
+
     @GetMapping("/{id}")
     public TripResponse getById(@PathVariable UUID id) {
         return tripService.getById(id);

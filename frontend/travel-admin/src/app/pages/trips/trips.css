@@ -205,3 +205,52 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
+
+.suggestions-section {
+  margin-bottom: 2rem;
+}
+
+.suggestions-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  border-left: 3px solid #3182ce;
+  padding-left: 0.75rem;
+}
+
+.trip-card.suggested {
+  border-left: 3px solid #3182ce;
+}
+
+.suggestions-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.suggestions-toggle:hover .suggestions-title {
+  color: #3182ce;
+}
+
+.toggle-icon {
+  font-size: 1rem;
+  color: #718096;
+  transition: transform 0.2s;
+  transform: rotate(-90deg);
+}
+
+.toggle-icon.open {
+  transform: rotate(0deg);
+}
+
+.suggestions-grid {
+  margin-top: 0;
+}
