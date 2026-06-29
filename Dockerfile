@@ -3,7 +3,7 @@ FROM jenkins/jenkins:lts-jdk17
 USER root
 
 RUN apt-get update && \
-    apt-get install -y chromium git curl python3 unzip xz-utils && \
+    apt-get install -y chromium git curl python3 unzip xz-utils jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
