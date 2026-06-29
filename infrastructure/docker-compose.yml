@@ -19,24 +19,6 @@ services:
       timeout: 5s
       retries: 10
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-    container_name: travel-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    networks:
-      - travel-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
   neo4j:
     image: neo4j:5
     container_name: travel-neo4j
@@ -74,22 +56,6 @@ services:
       -p ${NEO4J_PASSWORD:-neo4j_secret}
       -f /seed.cypher
     restart: "no"
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
-    container_name: travel-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - xpack.security.enrollment.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    networks:
-      - travel-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
   discovery-service:
     build: ../microservices/discovery-service
@@ -199,16 +165,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-travel}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel_secret}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-neo4j_secret}
-      ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST:-elasticsearch}
       JWT_SECRET: ${JWT_SECRET:-travel-jwt-secret-key-minimum-32-characters-long}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-travel-internal-api-key-change-me}
-      ELASTICSEARCH_HOST: http://elasticsearch:9200
     depends_on:
       postgres:
         condition: service_healthy
       neo4j:
-        condition: service_healthy
-      elasticsearch:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
@@ -241,4 +203,3 @@ networks:
 volumes:
   postgres-data:
   neo4j-data:
-  elasticsearch-data:

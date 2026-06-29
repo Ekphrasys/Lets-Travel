@@ -14,7 +14,8 @@
     <p class="empty">Aucun abonné pour ce voyage.</p>
   } @else {
     <p class="count">{{ rows().length }} abonné(s)</p>
-    <table class="data-table">
+    <table class="data-table" aria-describedby="subscribers-caption">
+      <caption id="subscribers-caption">Liste des abonnés du voyage</caption>
       <thead>
         <tr>
           <th>Prénom</th>

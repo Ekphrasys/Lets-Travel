@@ -138,7 +138,8 @@
     <section class="dashboard-section card-box">
       <h2>📋 Mes Réservations & Voyages Réalisés</h2>
       <div class="table-responsive">
-        <table class="table">
+        <table class="table" aria-describedby="bookings-caption">
+          <caption id="bookings-caption">Mes réservations et voyages réalisés</caption>
           <thead>
             <tr>
               <th>Voyage</th>
@@ -222,14 +223,14 @@
           </div>
         </div>
       </section>
->>>>>>> test-junkins
     }
 
     <!-- Mes Offres de Voyage -->
     <section class="dashboard-section card-box">
       <h2>✈️ Mes Offres de Voyage</h2>
       <div class="table-responsive">
-        <table class="table">
+        <table class="table" aria-describedby="manager-trips-caption">
+          <caption id="manager-trips-caption">Mes offres de voyage</caption>
           <thead>
             <tr>
               <th>Titre</th>
@@ -311,7 +312,8 @@
       <section class="dashboard-section card-box">
         <h2>🏆 Leaderboard des Managers (Performance & Feedbacks)</h2>
         <div class="table-responsive">
-          <table class="table">
+          <table class="table" aria-describedby="leaderboard-caption">
+            <caption id="leaderboard-caption">Classement des managers par score de performance</caption>
             <thead>
               <tr>
                 <th>Manager</th>
@@ -341,7 +343,8 @@
     <section class="dashboard-section card-box">
       <h2>🚩 Modération : Signalements déposés</h2>
       <div class="table-responsive">
-        <table class="table">
+        <table class="table" aria-describedby="reports-caption">
+          <caption id="reports-caption">Signalements déposés pour modération</caption>
           <thead>
             <tr>
               <th>ID Signalement</th>
@@ -425,7 +428,8 @@
       <div class="modal-card modal-large">
         <h3>Abonnés de : {{ selectedTripForSubscribers.title }}</h3>
         <div class="table-responsive">
-          <table class="table">
+          <table class="table" aria-describedby="subscribers-caption">
+            <caption id="subscribers-caption">Liste des abonnés du voyage sélectionné</caption>
             <thead>
               <tr>
                 <th>Nom</th>
