@@ -31,4 +31,4 @@ else
   echo "WARN: recharge JCasC manuelle — Manage Jenkins → Configuration as Code → Reload"
 fi
 
-echo "OK — relancez le build Jenkins (job travel)"
+echo "OK — relancez le build Jenkins (job lets-travel)"

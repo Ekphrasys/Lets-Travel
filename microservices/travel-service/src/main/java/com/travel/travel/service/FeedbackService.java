@@ -1,5 +1,6 @@
 package com.travel.travel.service;
 
+import com.travel.travel.client.UserServiceClient;
 import com.travel.travel.dto.CreateFeedbackRequest;
 import com.travel.travel.dto.FeedbackResponse;
 import com.travel.travel.model.Feedback;
@@ -19,10 +20,19 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final TripRepository tripRepository;
+    private final UserServiceClient userServiceClient;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
-    public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository) {
+    public FeedbackService(
+            FeedbackRepository feedbackRepository,
+            TripRepository tripRepository,
+            UserServiceClient userServiceClient,
+            Neo4jRecommendationService neo4jRecommendationService
+    ) {
         this.feedbackRepository = feedbackRepository;
         this.tripRepository = tripRepository;
+        this.userServiceClient = userServiceClient;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -36,7 +46,13 @@ public class FeedbackService {
         feedback.setUserId(userId);
         feedback.setRating(request.rating());
         feedback.setComment(request.comment());
-        return toResponse(feedbackRepository.save(feedback));
+
+        Feedback saved = feedbackRepository.save(feedback);
+
+        // Sync with Neo4j
+        neo4jRecommendationService.syncFeedback(userId, request.tripId(), request.rating());
+
+        return toResponse(saved);
     }
 
     public List<FeedbackResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
@@ -62,10 +78,14 @@ public class FeedbackService {
     }
 
     private FeedbackResponse toResponse(Feedback f) {
+        UserServiceClient.UserProfile profile = userServiceClient.getById(f.getUserId());
         return new FeedbackResponse(
                 f.getId(),
                 f.getTrip().getId(),
                 f.getUserId(),
+                profile.email(),
+                profile.firstName(),
+                profile.lastName(),
                 f.getRating(),
                 f.getComment(),
                 f.getCreatedAt()

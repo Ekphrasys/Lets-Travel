@@ -1,6 +1,6 @@
 jenkins:
-  systemMessage: "Travel Management System — CI/CD (audit)"
-  numExecutors: 2
+  systemMessage: "Lets-Travel Management System — CI/CD Pipeline"
+  numExecutors: 4
 
 credentials:
   system:
@@ -10,13 +10,18 @@ credentials:
               scope: GLOBAL
               id: "sonar-token"
               secret: "${SONAR_TOKEN}"
-              description: "SonarQube token (généré par scripts/setup-sonarqube.sh)"
+              description: "SonarQube token for Lets-Travel"
           - usernamePassword:
               scope: GLOBAL
               id: "git-travel-repo"
               username: "${GIT_USERNAME}"
               password: "${GIT_TOKEN}"
-              description: "Gitea travel-plan (scripts/setup-jenkins-git.sh)"
+              description: "Git repository credentials"
+          - string:
+              scope: GLOBAL
+              id: "neo4j-password"
+              secret: "${NEO4J_PASSWORD:-neo4j_secret}"
+              description: "Neo4j password for tests"
 
 tool:
   git:
@@ -39,6 +44,10 @@ tool:
     installations:
       - name: "sonar-scanner"
         home: "/opt/sonar-scanner"
+  dockerTool:
+    installations:
+      - name: "docker"
+        home: "/usr/bin/docker"
 
 unclassified:
   sonarGlobalConfiguration:
@@ -53,8 +62,8 @@ unclassified:
 
 jobs:
   - script: >
-      pipelineJob('travel') {
-        description('Pipeline Travel — build, tests, SonarQube, deploy (branche master)')
+      pipelineJob('lets-travel') {
+        description('Lets-Travel Pipeline — build, tests, SonarQube, security scan, deploy')
         triggers {
           scm('H/5 * * * *')
         }
@@ -63,10 +72,10 @@ jobs:
             scm {
               git {
                 remote {
-                  url('https://zone01normandie.org/git/ajoly/travel-plan.git')
+                  url('https://github.com/Ekphrasys/Lets-Travel.git')
                   credentials('git-travel-repo')
                 }
-                branches('*/master')
+                branches('*/main')
                 extensions {
                   cleanBeforeCheckout()
                   cloneOptions {

@@ -1,7 +1,7 @@
 export interface AuthResponse {
   token: string;
   userId: string;
-  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'MANAGER' | 'TRAVELER';
 }
 
 export interface Trip {
@@ -20,6 +20,9 @@ export interface Feedback {
   id: string;
   tripId: string;
   userId: string;
+  userEmail?: string;
+  userFirstName?: string;
+  userLastName?: string;
   rating: number;
   comment?: string;
   createdAt: string;

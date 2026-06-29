@@ -25,11 +25,21 @@ public class TripService {
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
+    private final ElasticsearchService elasticsearchService;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
-    public TripService(TripRepository tripRepository, BookingRepository bookingRepository, FeedbackRepository feedbackRepository) {
+    public TripService(
+            TripRepository tripRepository,
+            BookingRepository bookingRepository,
+            FeedbackRepository feedbackRepository,
+            ElasticsearchService elasticsearchService,
+            Neo4jRecommendationService neo4jRecommendationService
+    ) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.elasticsearchService = elasticsearchService;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     public List<TripResponse> findAll() {
@@ -96,6 +106,11 @@ public class TripService {
     }
 
     @Transactional
+    public TripResponse create(CreateTripRequest request) {
+        return create(request, UUID.randomUUID());
+    }
+
+    @Transactional
     public TripResponse create(CreateTripRequest request, UUID managerId) {
         Trip trip = new Trip();
         trip.setId(UUID.randomUUID());
@@ -107,14 +122,34 @@ public class TripService {
         trip.setSeatsAvailable(request.seatsAvailable());
         trip.setStatus("ACTIVE");
         trip.setManagerId(managerId);
-        return toResponse(tripRepository.save(trip));
+
+        Trip savedTrip = tripRepository.save(trip);
+
+        // Sync to Elasticsearch and Neo4j
+        elasticsearchService.indexTrip(savedTrip);
+        neo4jRecommendationService.syncTrip(
+                savedTrip.getId(),
+                savedTrip.getTitle(),
+                savedTrip.getOriginCity(),
+                savedTrip.getDestinationCity(),
+                savedTrip.getPrice().doubleValue(),
+                savedTrip.getDepartureDate()
+        );
+
+        return toResponse(savedTrip);
     }
 
     @Transactional
-    public TripResponse update(UUID id, CreateTripRequest request, UUID callerId, boolean isAdmin) {
+    public TripResponse update(UUID id, CreateTripRequest request) {
+        return update(id, request, null, true);
+    }
+
+    @Transactional
+    public TripResponse update(UUID id, CreateTripRequest request, UUID updaterId, boolean isAdmin) {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
-        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+
+        if (!isAdmin && updaterId != null && !updaterId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         trip.setTitle(request.title());
@@ -123,20 +158,49 @@ public class TripService {
         trip.setDepartureDate(request.departureDate());
         trip.setPrice(request.price());
         trip.setSeatsAvailable(request.seatsAvailable());
-        return toResponse(tripRepository.save(trip));
+
+        Trip savedTrip = tripRepository.save(trip);
+
+        // Sync to Elasticsearch and Neo4j
+        elasticsearchService.indexTrip(savedTrip);
+        neo4jRecommendationService.syncTrip(
+                savedTrip.getId(),
+                savedTrip.getTitle(),
+                savedTrip.getOriginCity(),
+                savedTrip.getDestinationCity(),
+                savedTrip.getPrice().doubleValue(),
+                savedTrip.getDepartureDate()
+        );
+
+        return toResponse(savedTrip);
     }
 
     @Transactional
-    public void delete(UUID id, UUID callerId, boolean isAdmin) {
-        Trip trip = tripRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
-        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
-        }
-        tripRepository.deleteById(id);
+    public void delete(UUID id) {
+        delete(id, null, true);
     }
 
-    Trip getTripEntity(UUID id) {
+    @Transactional
+    public void delete(UUID id, UUID updaterId, boolean isAdmin) {
+        Trip trip = tripRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
+
+        if (!isAdmin && updaterId != null && !updaterId.equals(trip.getManagerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+
+        tripRepository.delete(trip);
+
+        // Sync delete to Elasticsearch and Neo4j
+        elasticsearchService.deleteTrip(id);
+        neo4jRecommendationService.deleteTrip(id);
+    }
+
+    public List<Trip> getAllTripEntities() {
+        return tripRepository.findAll();
+    }
+
+    public Trip getTripEntity(UUID id) {
         return tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
     }

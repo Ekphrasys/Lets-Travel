@@ -46,58 +46,37 @@ Ce script configure SonarQube, Jenkins, le job pipeline `travel` et les credenti
 
 ---
 
-## Identifiants
+## 🔑 Identifiants de Connexion
 
-### Jenkins
+Voici un tableau récapitulatif de tous les comptes, identifiants et mots de passe par défaut pour accéder aux différents services :
 
-| Champ | Valeur |
-|-------|--------|
-| URL | http://localhost:9092 |
-| Utilisateur | `admin` |
-| Mot de passe | `admin123` |
+### 🖥️ Services et Infrastructure
 
-Job pipeline : **travel** → http://localhost:9092/job/travel/
+| Service | URL | Utilisateur / Email | Mot de passe | Notes / Rôles |
+| :--- | :--- | :--- | :--- | :--- |
+| **Neo4j Browser** | [http://localhost:7474](http://localhost:7474) | `neo4j` | `neo4j_secret` | Visualiseur de base graphe |
+| **PostgreSQL** | `localhost:5432` | `travel` | `travel_secret` | Base de données : `travel_db` |
+| **Jenkins** | [http://localhost:9092](http://localhost:9092) | `admin` | `admin123` | Serveur CI/CD (Job : `travel`) |
+| **SonarQube** | [http://localhost:9002](http://localhost:9002) | `admin` | `admin123` | Changement requis au premier accès |
 
-### SonarQube
+### ✈️ Comptes Applicatifs de Test (Pré-remplis)
 
-| Champ | Valeur |
-|-------|--------|
-| URL | http://localhost:9002 |
-| Utilisateur | `admin` |
-| Mot de passe | `admin123` |
+L'application est pré-initialisée avec les comptes de démonstration et de test suivants (tous utilisent le mot de passe **`password123`**) :
 
-> Au premier accès, SonarQube peut demander un changement de mot de passe. Les scripts CI utilisent la valeur définie dans `.env.ci` (`SONAR_ADMIN_PASSWORD`).
+| Rôle / Type | Adresse Email | Mot de passe | Description |
+| :--- | :--- | :--- | :--- |
+| **Administrateur** | `admin@travel.com` | `password123` | Accès total au tableau de bord admin |
+| **Travel Manager** | `alice.manager@travel.com` | `password123` | Gère ses propres voyages et subscribers |
+| **Travel Manager** | `bob.manager@travel.com` | `password123` | Autre manager de démo |
+| **Voyageur (Traveler)** | `charlie.traveler@travel.com` | `password123` | Compte voyageur avec réservations actives |
+| **Voyageur (Traveler)** | `david.traveler@travel.com` | `password123` | Compte voyageur avec réservations actives |
 
-### Application (frontend admin)
+> 💡 **Créer un autre Admin :** Si vous créez un compte par vous-même (ex: `test@travel.com`), vous pouvez le promouvoir en `ADMIN` en exécutant :
+> ```bash
+> docker exec -it travel-postgres psql -U travel -d travel_db -c "UPDATE \"user\".users SET role = 'ADMIN' WHERE email = 'votre_email@travel.com';"
+> ```
 
-| Champ | Valeur |
-|-------|--------|
-| URL | https://localhost:4200 |
-| Compte démo | `test@travel.com` / `password123` |
 
-Pour accéder à l'interface admin, promouvoir le compte en ADMIN :
-
-```bash
-docker exec -it travel-postgres psql -U travel -d travel_db \
-  -c "UPDATE \"user\".users SET role = 'ADMIN' WHERE email = 'test@travel.com';"
-```
-
-Se reconnecter ensuite sur https://localhost:4200.
-
-### Base de données (PostgreSQL)
-
-| Champ | Valeur |
-|-------|--------|
-| Utilisateur | `travel` |
-| Mot de passe | `travel_secret` |
-| Base | `travel_db` |
-
-### Neo4j
-
-| Champ | Valeur |
-|-------|--------|
-| Utilisateur | `neo4j` |
-| Mot de passe | `neo4j_secret` |
 
 ---
 

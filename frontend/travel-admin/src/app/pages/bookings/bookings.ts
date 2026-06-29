@@ -40,7 +40,7 @@ export class BookingsComponent implements OnInit {
         this.message.set('Réservation annulée.');
         this.load();
       },
-      error: () => this.message.set('Annulation impossible.')
+      error: (err) => this.message.set(err.error?.message || 'Annulation impossible.')
     });
   }
 

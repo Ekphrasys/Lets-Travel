@@ -1,8 +1,6 @@
 package com.travel.user.controller;
 
-import com.travel.user.dto.CreateUserRequest;
-import com.travel.user.dto.UpdateUserRequest;
-import com.travel.user.dto.UserResponse;
+import com.travel.user.dto.*;
 import com.travel.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,7 +26,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createInternal(@Valid @RequestBody CreateUserRequest request) {
         CreateUserRequest internalUser = new CreateUserRequest(
-                request.id(), request.email(), request.firstName(), request.lastName(), "USER");
+                request.id(), request.email(), request.firstName(), request.lastName(), request.role() != null ? request.role() : "TRAVELER");
         return userService.createUser(internalUser);
     }
 
@@ -36,6 +34,12 @@ public class UserController {
     @PreAuthorize("hasRole('INTERNAL')")
     public UserResponse byEmailInternal(@PathVariable String email) {
         return userService.getByEmail(email);
+    }
+
+    @GetMapping("/internal/{id}")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public UserResponse getByIdInternal(@PathVariable UUID id) {
+        return userService.getById(id);
     }
 
     @PostMapping
@@ -73,5 +77,39 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
         userService.delete(id);
+    }
+
+    @GetMapping("/managers")
+    public List<UserResponse> listManagers() {
+        return userService.findManagers();
+    }
+
+    @PostMapping("/reports")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ReportResponse report(@Valid @RequestBody CreateReportRequest request, Authentication authentication) {
+        UUID reporterId = UUID.fromString(authentication.getName());
+        return userService.createReport(reporterId, request);
+    }
+
+    @GetMapping("/reports")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<ReportResponse> reports() {
+        return userService.findAllReports();
+    }
+
+    @PutMapping("/reports/{id}/resolve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ReportResponse resolveReport(@PathVariable UUID id) {
+        return userService.resolveReport(id);
+    }
+
+    @GetMapping("/{id}/report-counts")
+    public ReportCountsResponse getReportCounts(@PathVariable UUID id) {
+        return userService.getReportCounts(id);
+    }
+
+    @GetMapping("/{id}/stats")
+    public UserStatsResponse getUserStats(@PathVariable UUID id) {
+        return userService.getUserStats(id);
     }
 }

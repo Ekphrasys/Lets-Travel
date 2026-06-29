@@ -40,7 +40,7 @@ public class AuthService {
 
         UUID userId = UUID.randomUUID();
         UserServiceClient.UserProfile profile = userServiceClient.createUser(
-                userId, request.email(), request.firstName(), request.lastName(), "USER"
+                userId, request.email(), request.firstName(), request.lastName(), "TRAVELER"
         );
 
         UserAuth userAuth = new UserAuth();

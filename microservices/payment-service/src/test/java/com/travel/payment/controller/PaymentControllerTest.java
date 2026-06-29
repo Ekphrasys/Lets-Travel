@@ -52,12 +52,12 @@ class PaymentControllerTest {
         UUID id = UUID.randomUUID();
         when(paymentService.createPayment(any(CreatePaymentRequest.class)))
                 .thenReturn(new PaymentResponse(id, UUID.randomUUID(), UUID.randomUUID(),
-                        BigDecimal.TEN, "COMPLETED", Instant.now()));
+                        BigDecimal.TEN, "COMPLETED", "CARD", Instant.now()));
 
         mockMvc.perform(post("/api/payments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new CreatePaymentRequest(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.TEN))))
+                                new CreatePaymentRequest(UUID.randomUUID(), UUID.randomUUID(), BigDecimal.TEN, "CARD"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
@@ -68,7 +68,7 @@ class PaymentControllerTest {
         UUID id = UUID.randomUUID();
         when(paymentService.findAll()).thenReturn(List.of(
                 new PaymentResponse(id, UUID.randomUUID(), UUID.randomUUID(),
-                        BigDecimal.TEN, "COMPLETED", Instant.now())));
+                        BigDecimal.TEN, "COMPLETED", "CARD", Instant.now())));
 
         mockMvc.perform(get("/api/payments"))
                 .andExpect(status().isOk())
@@ -81,7 +81,7 @@ class PaymentControllerTest {
         UUID id = UUID.randomUUID();
         when(paymentService.getById(id))
                 .thenReturn(new PaymentResponse(id, UUID.randomUUID(), UUID.randomUUID(),
-                        BigDecimal.TEN, "COMPLETED", Instant.now()));
+                        BigDecimal.TEN, "COMPLETED", "CARD", Instant.now()));
 
         mockMvc.perform(get("/api/payments/{id}", id))
                 .andExpect(status().isOk())
@@ -94,7 +94,7 @@ class PaymentControllerTest {
         UUID id = UUID.randomUUID();
         when(paymentService.update(eq(id), any(UpdatePaymentRequest.class)))
                 .thenReturn(new PaymentResponse(id, UUID.randomUUID(), UUID.randomUUID(),
-                        new BigDecimal("25.00"), "COMPLETED", Instant.now()));
+                        new BigDecimal("25.00"), "COMPLETED", "CARD", Instant.now()));
 
         mockMvc.perform(put("/api/payments/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +121,7 @@ class PaymentControllerTest {
         UUID id = UUID.randomUUID();
         when(paymentService.refund(id))
                 .thenReturn(new PaymentResponse(id, UUID.randomUUID(), UUID.randomUUID(),
-                        BigDecimal.TEN, "REFUNDED", Instant.now()));
+                        BigDecimal.TEN, "REFUNDED", "CARD", Instant.now()));
 
         mockMvc.perform(post("/api/payments/{id}/refund", id))
                 .andExpect(status().isOk())
