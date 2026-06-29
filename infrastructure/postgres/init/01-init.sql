@@ -56,27 +56,15 @@ CREATE INDEX idx_bookings_trip_id ON travel.bookings(trip_id);
 -- travel.feedbacks
 CREATE TABLE travel.feedbacks (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    trip_id    UUID NOT NULL REFERENCES travel.trips(id) ON DELETE CASCADE,
+    trip_id    UUID NOT NULL REFERENCES travel.trips(id),
     user_id    UUID NOT NULL,
     rating     INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment    TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_feedbacks_trip ON travel.feedbacks(trip_id);
-
--- user.reports
-CREATE TABLE "user".reports (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    reporter_id UUID NOT NULL,
-    reported_id UUID NOT NULL,
-    trip_id     UUID,
-    reason      TEXT NOT NULL,
-    status      VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_reports_reported ON "user".reports(reported_id);
+CREATE INDEX idx_feedbacks_trip_id ON travel.feedbacks(trip_id);
+CREATE INDEX idx_feedbacks_user_id ON travel.feedbacks(user_id);
 
 -- payment.payments
 CREATE TABLE payment.payments (

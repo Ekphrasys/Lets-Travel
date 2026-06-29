@@ -35,12 +35,21 @@ public class BookingController {
         return bookingService.findByUser(userId);
     }
 
-    @DeleteMapping("/{id}")
-    public BookingResponse cancel(@PathVariable UUID id, Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
+    @GetMapping("/trip/{tripId}")
+    public List<BookingResponse> byTrip(@PathVariable UUID tripId, Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
-        return bookingService.cancelBooking(id, userId, isAdmin);
+        return bookingService.findByTrip(tripId, callerId, isAdmin);
+    }
+
+    @DeleteMapping("/{id}")
+    public BookingResponse cancel(@PathVariable UUID id, Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return bookingService.cancelBooking(id, callerId, isAdmin);
     }
 }

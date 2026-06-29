@@ -555,3 +555,7 @@
   padding: 1.25rem 1.5rem;
   border: 1px solid #e2e8f0;
 }
+
+.card-link.manager {
+  border-left: 4px solid #0ea5e9;
+}

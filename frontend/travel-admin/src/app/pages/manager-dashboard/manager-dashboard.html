@@ -1,0 +1,45 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Tableau de bord</h1>
+    <a routerLink="/manager/trips" class="btn-primary">Gérer mes voyages</a>
+  </div>
+
+  @if (loading()) {
+    <p class="loading">Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (stats(); as s) {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">✈️</div>
+        <div class="stat-value">{{ s.totalTrips }}</div>
+        <div class="stat-label">Voyages créés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ s.totalTravelers }}</div>
+        <div class="stat-label">Voyageurs confirmés</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-icon">💶</div>
+        <div class="stat-value">{{ s.totalIncome | number:'1.2-2' }} €</div>
+        <div class="stat-label">Revenus totaux</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a routerLink="/manager/trips" class="action-card">
+        <span class="action-icon">📋</span>
+        <span>Mes voyages</span>
+      </a>
+      <a routerLink="/trips/new" class="action-card">
+        <span class="action-icon">➕</span>
+        <span>Nouveau voyage</span>
+      </a>
+      <a routerLink="/manager/analytics" class="action-card action-card--highlight">
+        <span class="action-icon">📊</span>
+        <span>Analytiques & Planification</span>
+      </a>
+    </div>
+  }
+</div>

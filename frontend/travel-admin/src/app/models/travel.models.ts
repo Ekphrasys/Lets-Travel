@@ -1,7 +1,7 @@
 export interface AuthResponse {
   token: string;
   userId: string;
-  role: 'USER' | 'ADMIN' | 'MANAGER' | 'TRAVELER';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN';
 }
 
 export interface Trip {
@@ -14,6 +14,15 @@ export interface Trip {
   seatsAvailable: number;
   status: string;
   managerId?: string;
+}
+
+export interface Feedback {
+  id: string;
+  tripId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
 }
 
 export interface Booking {
@@ -68,11 +77,24 @@ export interface UpdatePaymentPayload {
   status: string;
 }
 
-export interface UserStats {
-  pastTravelParticipation: number;
-  reportsFiled: number;
-  reportsReceived: number;
-  subscriptionCancellations: number;
-  preferredPaymentMethod: string;
+export interface ManagerStats {
+  totalTrips: number;
+  totalTravelers: number;
+  totalIncome: number;
 }
 
+export interface TripAnalytics {
+  id: string;
+  title: string;
+  originCity: string;
+  destinationCity: string;
+  departureDate: string;
+  price: number;
+  seatsAvailable: number;
+  status: string;
+  confirmedBookings: number;
+  revenue: number;
+  occupancyRate: number;
+  averageRating: number;
+  feedbackCount: number;
+}
