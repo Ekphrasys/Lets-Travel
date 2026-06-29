@@ -12,10 +12,11 @@ RUN set -e; \
     exit 1
 
 FROM eclipse-temurin:17-jre-alpine
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget && addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --retries=10 --start-period=60s \
   CMD wget -qO- --no-check-certificate https://localhost:8080/actuator/health | grep -q UP || exit 1
+USER appuser
 ENTRYPOINT ["java", "-jar", "app.jar"]
