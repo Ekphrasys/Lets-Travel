@@ -1,5 +1,6 @@
 package com.travel.travel.service;
 
+import com.travel.travel.client.UserServiceClient;
 import com.travel.travel.dto.CreateFeedbackRequest;
 import com.travel.travel.dto.FeedbackResponse;
 import com.travel.travel.model.Feedback;
@@ -86,10 +87,14 @@ public class FeedbackService {
     }
 
     private FeedbackResponse toResponse(Feedback f) {
+        UserServiceClient.UserProfile profile = userServiceClient.getById(f.getUserId());
         return new FeedbackResponse(
                 f.getId(),
                 f.getTrip().getId(),
                 f.getUserId(),
+                profile.email(),
+                profile.firstName(),
+                profile.lastName(),
                 f.getRating(),
                 f.getComment(),
                 f.getCreatedAt()

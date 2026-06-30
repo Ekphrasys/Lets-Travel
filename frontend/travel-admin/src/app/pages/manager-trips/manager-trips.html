@@ -11,7 +11,8 @@
   } @else if (trips().length === 0) {
     <p class="empty">Vous n'avez pas encore créé de voyages.</p>
   } @else {
-    <table class="data-table">
+    <table class="data-table" aria-describedby="trips-caption">
+      <caption id="trips-caption">Liste de mes voyages</caption>
       <thead>
         <tr>
           <th>Titre</th>

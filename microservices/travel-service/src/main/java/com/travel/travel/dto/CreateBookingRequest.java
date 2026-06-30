@@ -4,5 +4,8 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public record CreateBookingRequest(@NotNull UUID tripId) {
+public record CreateBookingRequest(
+        @NotNull UUID tripId,
+        String paymentMethod
+) {
 }

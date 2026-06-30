@@ -114,6 +114,11 @@ public class TripService {
     }
 
     @Transactional
+    public TripResponse create(CreateTripRequest request) {
+        return create(request, UUID.randomUUID());
+    }
+
+    @Transactional
     public TripResponse create(CreateTripRequest request, UUID managerId) {
         Trip trip = new Trip();
         trip.setId(UUID.randomUUID());
@@ -132,10 +137,11 @@ public class TripService {
     }
 
     @Transactional
-    public TripResponse update(UUID id, CreateTripRequest request, UUID callerId, boolean isAdmin) {
+    public TripResponse update(UUID id, CreateTripRequest request, UUID updaterId, boolean isAdmin) {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
-        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+
+        if (!isAdmin && updaterId != null && !updaterId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         trip.setTitle(request.title());
@@ -151,10 +157,11 @@ public class TripService {
     }
 
     @Transactional
-    public void delete(UUID id, UUID callerId, boolean isAdmin) {
+    public void delete(UUID id, UUID updaterId, boolean isAdmin) {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
-        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
+
+        if (!isAdmin && updaterId != null && !updaterId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
         tripRepository.deleteById(id);
@@ -180,7 +187,11 @@ public class TripService {
                 .toList();
     }
 
-    Trip getTripEntity(UUID id) {
+    public List<Trip> getAllTripEntities() {
+        return tripRepository.findAll();
+    }
+
+    public Trip getTripEntity(UUID id) {
         return tripRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
     }

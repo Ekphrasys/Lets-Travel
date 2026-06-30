@@ -21,14 +21,15 @@ public class PaymentServiceClient {
         this.internalApiKey = internalApiKey;
     }
 
-    public PaymentResult createPayment(UUID bookingId, UUID userId, BigDecimal amount) {
+    public PaymentResult createPayment(UUID bookingId, UUID userId, BigDecimal amount, String paymentMethod) {
         return webClient.post()
                 .uri("/api/payments/internal")
                 .header("X-Internal-Key", internalApiKey)
                 .bodyValue(Map.of(
                         "bookingId", bookingId,
                         "userId", userId,
-                        "amount", amount
+                        "amount", amount,
+                        "paymentMethod", paymentMethod != null ? paymentMethod : "CARD"
                 ))
                 .retrieve()
                 .bodyToMono(PaymentResult.class)

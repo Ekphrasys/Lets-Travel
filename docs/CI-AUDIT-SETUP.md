@@ -19,7 +19,7 @@
 ## Installation automatique (recommandé)
 
 ```bash
-cd /home/zone01student/BrancheJava/travel
+cd /home/alex/zone01/Lets-Travel
 chmod +x scripts/*.sh
 ./scripts/setup-ci.sh
 ```
@@ -30,7 +30,7 @@ Ce script :
 3. Crée le projet SonarQube `travel`
 4. Crée la Quality Gate **Travel Audit Gate**
 5. Génère un token SonarQube → fichier `.env.ci`
-6. Configure Git Gitea + redémarre Jenkins (JCasC, job `travel` en cpsScm)
+6. Configure le dépôt Git détecté + redémarre Jenkins (JCasC, job `travel` en cpsScm)
 
 ---
 
@@ -126,7 +126,7 @@ Ce script :
 
 **New Item → Pipeline `travel`** :
 - Definition : Pipeline script from SCM
-- Repository : `https://zone01normandie.org/git/ajoly/travel-plan.git`
+- Repository : `https://github.com/Ekphrasys/Lets-Travel.git` (ou l'URL de votre dépôt)
 - Credentials : `git-travel-repo`
 - Branches : `*/master`
 - Script Path : `Jenkinsfile`

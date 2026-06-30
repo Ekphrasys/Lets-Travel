@@ -55,7 +55,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         PaymentServiceClient.PaymentResult payment = paymentServiceClient.createPayment(
-                booking.getId(), userId, trip.getPrice()
+                booking.getId(), userId, trip.getPrice(), request.paymentMethod()
         );
 
         if ("COMPLETED".equals(payment.status())) {
@@ -119,6 +119,10 @@ public class BookingService {
         }
 
         booking.setStatus("CANCELLED");
+        
+        // Sync to Neo4j
+        neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
+        
         return toResponse(bookingRepository.save(booking));
     }
 
