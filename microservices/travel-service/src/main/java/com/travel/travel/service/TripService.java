@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -169,10 +170,16 @@ public class TripService {
     }
 
     public List<TripResponse> getSuggestions(UUID userId) {
+        Set<UUID> alreadyBooked = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(b -> "CONFIRMED".equals(b.getStatus()) || "PENDING".equals(b.getStatus()))
+                .map(b -> b.getTrip().getId())
+                .collect(Collectors.toSet());
+
         List<String> suggestedIds = tripGraphService.getSuggestedTripIds(userId);
         if (suggestedIds.isEmpty()) {
             return tripRepository.findByStatusOrderByDepartureDateAsc("ACTIVE")
                     .stream()
+                    .filter(t -> !alreadyBooked.contains(t.getId()))
                     .limit(5)
                     .map(this::toResponse)
                     .toList();
@@ -183,6 +190,7 @@ public class TripService {
         return suggestedIds.stream()
                 .map(id -> tripMap.get(UUID.fromString(id)))
                 .filter(Objects::nonNull)
+                .filter(t -> !alreadyBooked.contains(t.getId()))
                 .map(this::toResponse)
                 .toList();
     }

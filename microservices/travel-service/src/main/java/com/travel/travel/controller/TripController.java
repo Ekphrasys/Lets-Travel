@@ -1,11 +1,14 @@
 package com.travel.travel.controller;
 
-import com.travel.travel.dto.CreateTripRequest;
-import com.travel.travel.dto.ManagerStatsResponse;
-import com.travel.travel.dto.RouteResponse;
-import com.travel.travel.dto.TripAnalyticsResponse;
-import com.travel.travel.dto.TripResponse;
+import com.travel.travel.client.UserServiceClient;
+import com.travel.travel.dto.*;
+import com.travel.travel.model.Feedback;
+import com.travel.travel.model.Trip;
+import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.search.TripSearchService;
+import com.travel.travel.service.BookingService;
+import com.travel.travel.service.Neo4jRecommendationService;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
 import jakarta.validation.Valid;
@@ -27,12 +30,27 @@ public class TripController {
     private final TripService tripService;
     private final RouteSearchService routeSearchService;
     private final TripSearchService tripSearchService;
+    private final Neo4jRecommendationService neo4jRecommendationService;
+    private final BookingRepository bookingRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final UserServiceClient userServiceClient;
+    private final BookingService bookingService;
 
     public TripController(TripService tripService, RouteSearchService routeSearchService,
-                          TripSearchService tripSearchService) {
+                          TripSearchService tripSearchService,
+                          Neo4jRecommendationService neo4jRecommendationService,
+                          BookingRepository bookingRepository,
+                          FeedbackRepository feedbackRepository,
+                          UserServiceClient userServiceClient,
+                          BookingService bookingService) {
         this.tripService = tripService;
         this.routeSearchService = routeSearchService;
         this.tripSearchService = tripSearchService;
+        this.neo4jRecommendationService = neo4jRecommendationService;
+        this.bookingRepository = bookingRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.userServiceClient = userServiceClient;
+        this.bookingService = bookingService;
     }
 
     @GetMapping
@@ -86,6 +104,22 @@ public class TripController {
         return tripService.getSuggestions(userId);
     }
 
+    @GetMapping("/recommendations")
+    public List<TripResponse> recommendations(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        List<UUID> ids = neo4jRecommendationService.getRecommendations(userId);
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<UUID> alreadyBooked = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(b -> "CONFIRMED".equals(b.getStatus()) || "PENDING".equals(b.getStatus()))
+                .map(b -> b.getTrip().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        return tripService.findAll().stream()
+                .filter(t -> ids.contains(t.id()) && !alreadyBooked.contains(t.id()))
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public TripResponse getById(@PathVariable UUID id) {
         return tripService.getById(id);
@@ -116,43 +150,6 @@ public class TripController {
         tripService.delete(id, updaterId, isAdmin);
     }
 
-    private boolean isAdmin(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch("ROLE_ADMIN"::equals);
-    }
-
-    @GetMapping("/search")
-    public List<TripResponse> search(@RequestParam String query) {
-        List<UUID> ids = elasticsearchService.search(query);
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<TripResponse> trips = tripService.findAll().stream()
-                .filter(t -> ids.contains(t.id()))
-                .toList();
-        List<TripResponse> sortedTrips = new ArrayList<>(trips);
-        sortedTrips.sort(Comparator.comparingInt(t -> ids.indexOf(t.id())));
-        return sortedTrips;
-    }
-
-    @GetMapping("/search/autocomplete")
-    public List<String> autocomplete(@RequestParam String query) {
-        return elasticsearchService.autocomplete(query);
-    }
-
-    @GetMapping("/recommendations")
-    public List<TripResponse> recommendations(Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
-        List<UUID> ids = neo4jRecommendationService.getRecommendations(userId);
-        if (ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return tripService.findAll().stream()
-                .filter(t -> ids.contains(t.id()))
-                .toList();
-    }
-
     @PostMapping("/{id}/feedback")
     @Transactional
     public FeedbackResponse leaveFeedback(
@@ -167,8 +164,7 @@ public class TripController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous ne pouvez laisser un avis que sur un voyage réservé");
         }
 
-        Trip trip = new Trip();
-        trip.setId(id);
+        Trip trip = tripService.getTripEntity(id);
 
         Feedback feedback = new Feedback();
         feedback.setId(UUID.randomUUID());
@@ -184,6 +180,7 @@ public class TripController {
         return new FeedbackResponse(
                 feedback.getId(),
                 id,
+                trip.getTitle(),
                 feedback.getUserId(),
                 profile.email(),
                 profile.firstName(),
@@ -202,6 +199,7 @@ public class TripController {
                     return new FeedbackResponse(
                             f.getId(),
                             f.getTrip().getId(),
+                            f.getTrip().getTitle(),
                             f.getUserId(),
                             profile.email(),
                             profile.firstName(),
@@ -253,7 +251,7 @@ public class TripController {
                 .map(f -> {
                     UserServiceClient.UserProfile p = userServiceClient.getById(f.getUserId());
                     return new FeedbackResponse(
-                            f.getId(), f.getTrip().getId(), f.getUserId(),
+                            f.getId(), f.getTrip().getId(), f.getTrip().getTitle(), f.getUserId(),
                             p.email(), p.firstName(), p.lastName(),
                             f.getRating(), f.getComment(), f.getCreatedAt()
                     );
@@ -325,7 +323,7 @@ public class TripController {
                 .map(f -> {
                     UserServiceClient.UserProfile p = userServiceClient.getById(f.getUserId());
                     return new FeedbackResponse(
-                            f.getId(), f.getTrip().getId(), f.getUserId(),
+                            f.getId(), f.getTrip().getId(), f.getTrip().getTitle(), f.getUserId(),
                             p.email(), p.firstName(), p.lastName(),
                             f.getRating(), f.getComment(), f.getCreatedAt()
                     );
@@ -373,5 +371,11 @@ public class TripController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation active introuvable"));
 
         bookingService.cancelBooking(booking.getId(), userId, true);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
     }
 }

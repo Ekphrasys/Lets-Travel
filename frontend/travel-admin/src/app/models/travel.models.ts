@@ -31,6 +31,7 @@ export interface Feedback {
 export interface Booking {
   id: string;
   tripId: string;
+  tripTitle?: string;
   userId: string;
   status: string;
   paymentId?: string;

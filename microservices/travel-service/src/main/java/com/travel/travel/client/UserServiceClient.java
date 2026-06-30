@@ -33,4 +33,19 @@ public class UserServiceClient {
     }
 
     public record ManagerInfo(UUID id, String email, String firstName, String lastName, String role) {}
+
+    public record UserProfile(UUID id, String email, String firstName, String lastName, String role) {}
+
+    public UserProfile getById(UUID userId) {
+        try {
+            return webClient.get()
+                    .uri("/api/users/internal/{id}", userId)
+                    .header("X-Internal-Key", internalApiKey)
+                    .retrieve()
+                    .bodyToMono(UserProfile.class)
+                    .block();
+        } catch (WebClientResponseException.NotFound e) {
+            return null;
+        }
+    }
 }

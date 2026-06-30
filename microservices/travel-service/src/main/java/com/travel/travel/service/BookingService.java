@@ -23,17 +23,20 @@ public class BookingService {
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
     private final TripGraphService tripGraphService;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
             PaymentServiceClient paymentServiceClient,
-            TripGraphService tripGraphService
+            TripGraphService tripGraphService,
+            Neo4jRecommendationService neo4jRecommendationService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
         this.tripGraphService = tripGraphService;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -65,6 +68,7 @@ public class BookingService {
             tripService.saveTrip(trip);
             BookingResponse response = toResponse(bookingRepository.save(booking));
             tripGraphService.recordParticipation(userId, trip);
+            neo4jRecommendationService.syncBooking(userId, trip.getId(), false);
             return response;
         }
 
@@ -130,6 +134,7 @@ public class BookingService {
         return new BookingResponse(
                 booking.getId(),
                 booking.getTrip().getId(),
+                booking.getTrip().getTitle(),
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getPaymentId(),

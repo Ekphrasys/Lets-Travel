@@ -9,7 +9,7 @@
     <caption>Mes réservations</caption>
     <thead>
       <tr>
-        <th>Voyage ID</th>
+        <th>Voyage</th>
         <th>Statut</th>
         <th>Date</th>
         <th>Actions</th>
@@ -18,7 +18,7 @@
     <tbody>
       @for (b of bookings(); track b.id) {
         <tr>
-          <td>{{ b.tripId }}</td>
+          <td>{{ b.tripTitle ?? b.tripId }}</td>
           <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
           <td>{{ b.createdAt | date:'short' }}</td>
           <td class="actions-cell">

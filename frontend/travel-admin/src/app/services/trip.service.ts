@@ -52,4 +52,28 @@ export class TripService {
   suggestions(): Observable<Trip[]> {
     return this.http.get<Trip[]>(`${this.base}/suggestions`);
   }
+
+  recommendations(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/recommendations`);
+  }
+
+  leaveFeedback(tripId: string, rating: number, comment: string): Observable<any> {
+    return this.http.post<any>(`${this.base}/${tripId}/feedback`, { rating, comment });
+  }
+
+  adminDashboard(): Observable<any> {
+    return this.http.get<any>(`${this.base}/admin/dashboard`);
+  }
+
+  managerDashboard(managerId: string): Observable<any> {
+    return this.http.get<any>(`${this.base}/managers/${managerId}/dashboard`);
+  }
+
+  subscribers(tripId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/${tripId}/subscribers`);
+  }
+
+  unsubscribe(tripId: string, userId: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/${tripId}/unsubscribe/${userId}`, {});
+  }
 }

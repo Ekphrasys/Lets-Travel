@@ -23,13 +23,16 @@ public class FeedbackService {
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
     private final TripGraphService tripGraphService;
+    private final UserServiceClient userServiceClient;
 
     public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository,
-                           BookingRepository bookingRepository, TripGraphService tripGraphService) {
+                           BookingRepository bookingRepository, TripGraphService tripGraphService,
+                           UserServiceClient userServiceClient) {
         this.feedbackRepository = feedbackRepository;
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.tripGraphService = tripGraphService;
+        this.userServiceClient = userServiceClient;
     }
 
     @Transactional
@@ -91,6 +94,7 @@ public class FeedbackService {
         return new FeedbackResponse(
                 f.getId(),
                 f.getTrip().getId(),
+                f.getTrip().getTitle(),
                 f.getUserId(),
                 profile.email(),
                 profile.firstName(),

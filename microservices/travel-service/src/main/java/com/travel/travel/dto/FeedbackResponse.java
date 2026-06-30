@@ -6,6 +6,7 @@ import java.util.UUID;
 public record FeedbackResponse(
         UUID id,
         UUID tripId,
+        String tripTitle,
         UUID userId,
         String userEmail,
         String userFirstName,
