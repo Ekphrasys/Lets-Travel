@@ -18,7 +18,7 @@
       <a routerLink="/admin/payments" class="btn btn-purple">💳 Gérer les Paiements</a>
       <a routerLink="/trips/new" class="btn btn-purple">➕ Créer un Voyage</a>
       }
-      @if (auth.isManager()) {
+      @if (auth.isTravelManager()) {
       <a routerLink="/trips/new" class="btn btn-purple">➕ Créer un Voyage</a>
       }
     </div>
@@ -36,121 +36,11 @@
     <a routerLink="/admin/users" class="card-link admin">👥 Utilisateurs</a>
     <a routerLink="/admin/payments" class="card-link admin">💳 Paiements</a>
     }
+  </div>
 
-    @if (activeTab() === 'trips') {
-    <!-- Mes Offres de Voyage -->
-    <section class="dashboard-section card-box">
-      <h2>✈️ Mes Offres de Voyage</h2>
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Titre</th>
-              <th>Itinéraire</th>
-              <th>Date départ</th>
-              <th>Tarif</th>
-              <th>Places disponibles</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (t of managerTrips(); track t.id) {
-            <tr>
-              <td><strong>{{ t.title }}</strong></td>
-              <td>{{ t.originCity }} ➔ {{ t.destinationCity }}</td>
-              <td>{{ t.departureDate | date:'dd/MM/yyyy' }}</td>
-              <td>{{ t.price }} €</td>
-              <td>{{ t.seatsAvailable }}</td>
-              <td>
-                <button (click)="openSubscribersModal(t)" class="btn btn-sm btn-secondary">👥 Abonnés</button>
-                <a [routerLink]="['/trips', t.id, 'edit']" class="btn btn-sm btn-primary ml-2">Modifier</a>
-              </td>
-            </tr>
-            } @empty {
-            <tr>
-              <td colspan="6" class="empty-msg">Aucune offre de voyage créée pour le moment.</td>
-            </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-    }
-
-    @if (activeTab() === 'feedbacks') {
-    <!-- Avis spécifiques reçus par le Manager (ses voyages uniquement) -->
-    @if (managerDashboardData(); as data) {
-    <section class="dashboard-section card-box">
-      <h2>💬 Avis voyageurs sur mes offres</h2>
-      <p class="section-desc">Retrouvez ci-dessous tous les retours d'expérience laissés par les voyageurs concernant
-        uniquement vos offres organisées.</p>
-      <div class="feedbacks-list">
-        @for (f of data.feedbacks; track f.id) {
-        <div class="feedback-item">
-          <div class="feedback-header">
-            <strong>{{ f.userFirstName }} {{ f.userLastName }}</strong>
-            <span class="stars">{{ '★'.repeat(f.rating) }}{{ '☆'.repeat(5 - f.rating) }}</span>
-          </div>
-          <p class="comment">" {{ f.comment }} "</p>
-          <span class="date">{{ f.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-        } @empty {
-        <p class="empty-msg">Aucun avis reçu pour l'instant.</p>
-        }
-      </div>
-    </section>
-    }
-    }
-
-    @if (activeTab() === 'stats') {
-    <!-- Mes Statistiques Individuelles (Manager) -->
-    @if (individualStats(); as stats) {
-    <section class="dashboard-section card-box">
-      <h2>📊 Mes Statistiques Individuelles</h2>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-icon">✈️</span>
-          <span class="stat-value">{{ stats.pastTravelParticipation }}</span>
-          <span class="stat-label">Voyages effectués</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">❌</span>
-          <span class="stat-value">{{ stats.subscriptionCancellations }}</span>
-          <span class="stat-label">Annulations de réservation</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">🚩</span>
-          <span class="stat-value">{{ stats.reportsFiled }}</span>
-          <span class="stat-label">Signalements envoyés</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">⚠️</span>
-          <span class="stat-value">{{ stats.reportsReceived }}</span>
-          <span class="stat-label">Signalements reçus</span>
-        </div>
-      </div>
-      <div class="additional-stats-box card-box mt-4">
-        <p>💳 Mode de paiement préféré : <span class="badge status-confirmed">{{ stats.preferredPaymentMethod }}</span>
-        </p>
-      </div>
-    </section>
-    }
-    }
-
-    @if (activeTab() === 'traveler') {
-    <!-- Mode Simulation Voyageur -->
-    <section class="dashboard-section card-box">
-      <h2>🔎 Mode Simulation Voyageur</h2>
-      <p class="section-desc">Cette section vous permet d'explorer l'application comme un voyageur pour comprendre son
-        expérience utilisateur.</p>
-
-      <div class="traveler-simulator-content">
-        <ng-container *ngTemplateOutlet="travelerTemplate"></ng-container>
-      </div>
-    </section>
-    }
-
-    }
+  @if (auth.isTraveler()) {
+  <ng-container *ngTemplateOutlet="travelerTemplate"></ng-container>
+  }
 
     <!-- ==================== VUE ADMINISTRATEUR (ADMIN) ==================== -->
     @if (auth.isAdmin()) {

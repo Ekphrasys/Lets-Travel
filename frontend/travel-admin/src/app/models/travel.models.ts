@@ -98,3 +98,12 @@ export interface TripAnalytics {
   averageRating: number;
   feedbackCount: number;
 }
+
+export interface UserStats {
+  pastTravelParticipation: number;
+  reportsFiled: number;
+  reportsReceived: number;
+  subscriptionCancellations: number;
+  preferredPaymentMethod: string;
+}
+

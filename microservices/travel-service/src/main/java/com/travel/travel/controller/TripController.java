@@ -1,12 +1,16 @@
 package com.travel.travel.controller;
 
+import com.travel.travel.client.UserServiceClient;
 import com.travel.travel.dto.CreateTripRequest;
 import com.travel.travel.dto.ManagerStatsResponse;
 import com.travel.travel.dto.RouteResponse;
 import com.travel.travel.dto.TripAnalyticsResponse;
 import com.travel.travel.dto.TripResponse;
-import com.travel.travel.service.RouteSearchService;
-import com.travel.travel.service.TripService;
+import com.travel.travel.model.Feedback;
+import com.travel.travel.model.Trip;
+import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.repository.FeedbackRepository;
+import com.travel.travel.service.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

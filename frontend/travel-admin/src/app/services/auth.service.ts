@@ -59,6 +59,14 @@ export class AuthService {
     return this.currentUser()?.role === 'TRAVEL_MANAGER';
   }
 
+  isManager(): boolean {
+    return this.isTravelManager();
+  }
+
+  isTraveler(): boolean {
+    return this.currentUser()?.role === 'USER';
+  }
+
   isManagerOrAdmin(): boolean {
     const role = this.currentUser()?.role;
     return role === 'ADMIN' || role === 'TRAVEL_MANAGER';

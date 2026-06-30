@@ -83,7 +83,7 @@ export class DashboardComponent implements OnInit {
     if (this.auth.isAdmin()) {
       this.loadAdminData();
       this.loadIndividualStats(user.sub);
-    } else if (this.auth.isManager()) {
+    } else if (this.auth.isTravelManager()) {
       this.loadManagerData(user.sub);
       this.loadIndividualStats(user.sub);
     } else {

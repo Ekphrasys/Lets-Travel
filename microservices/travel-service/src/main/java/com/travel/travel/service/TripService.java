@@ -25,11 +25,21 @@ public class TripService {
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
+    private final ElasticsearchService elasticsearchService;
+    private final Neo4jRecommendationService neo4jRecommendationService;
 
-    public TripService(TripRepository tripRepository, BookingRepository bookingRepository, FeedbackRepository feedbackRepository) {
+    public TripService(
+            TripRepository tripRepository,
+            BookingRepository bookingRepository,
+            FeedbackRepository feedbackRepository,
+            ElasticsearchService elasticsearchService,
+            Neo4jRecommendationService neo4jRecommendationService
+    ) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
+        this.elasticsearchService = elasticsearchService;
+        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     public List<TripResponse> findAll() {
@@ -140,15 +150,7 @@ public class TripService {
         return toResponse(savedTrip);
     }
 
-    @Transactional
-    public void delete(UUID id, UUID callerId, boolean isAdmin) {
-        Trip trip = tripRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
-        if (!isAdmin && !callerId.equals(trip.getManagerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
-        }
-        tripRepository.deleteById(id);
-    }
+
 
     @Transactional
     public void delete(UUID id, UUID updaterId, boolean isAdmin) {
