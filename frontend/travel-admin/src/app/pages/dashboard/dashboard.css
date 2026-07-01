@@ -472,3 +472,87 @@
 .card-link.manager {
   border-left: 4px solid #0ea5e9;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .welcome {
+    justify-content: center;
+  }
+
+  .quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .quick-links .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-box {
+    padding: 1.25rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .search-input-wrapper {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .search-input-wrapper .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .autocomplete-dropdown {
+    left: 1rem;
+    right: 1rem;
+  }
+
+  .booking-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .booking-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-card {
+    padding: 1.25rem;
+    gap: 1rem;
+    width: 95%;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

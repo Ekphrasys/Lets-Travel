@@ -154,3 +154,19 @@ button {
   border-radius: 8px;
   margin-bottom: 1rem;
 }
+
+@media (max-width: 768px) {
+  th, td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .feedback-form {
+    max-width: 100%;
+  }
+
+  .star-rating .star {
+    font-size: 1.5rem;
+  }
+}
+

@@ -91,3 +91,34 @@
   background: #fed7d7 !important;
   color: #c53030 !important;
 }
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .btn-primary {
+    text-align: center;
+    padding: 0.65rem 1rem;
+  }
+
+  .trip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .actions button, .btn-edit {
+    width: 100%;
+    text-align: center;
+    padding: 0.65rem;
+  }
+}
+

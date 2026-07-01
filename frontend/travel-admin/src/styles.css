@@ -12,4 +12,19 @@ body {
 .page {
   max-width: 1100px;
   margin: 0 auto;
+  padding: 1.5rem;
 }
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
+}
+
