@@ -108,6 +108,46 @@ public class TripService {
         }).toList();
     }
 
+    public List<TripAnalyticsResponse> getAllAnalytics() {
+        List<Trip> trips = tripRepository.findAll();
+        if (trips.isEmpty()) return List.of();
+
+        List<UUID> tripIds = trips.stream().map(Trip::getId).toList();
+
+        Map<UUID, Long> bookingCounts = new HashMap<>();
+        Map<UUID, BigDecimal> revenues = new HashMap<>();
+        bookingRepository.bookingStatsByTripIds(tripIds, "CONFIRMED").forEach(row -> {
+            UUID tid = (UUID) row[0];
+            bookingCounts.put(tid, ((Number) row[1]).longValue());
+            revenues.put(tid, (BigDecimal) row[2]);
+        });
+
+        Map<UUID, Double> avgRatings = new HashMap<>();
+        Map<UUID, Long> feedbackCounts = new HashMap<>();
+        feedbackRepository.ratingStatsByTripIds(tripIds).forEach(row -> {
+            UUID tid = (UUID) row[0];
+            avgRatings.put(tid, ((Number) row[1]).doubleValue());
+            feedbackCounts.put(tid, ((Number) row[2]).longValue());
+        });
+
+        return trips.stream()
+                .sorted(java.util.Comparator.comparing(Trip::getDepartureDate).reversed())
+                .map(trip -> {
+                    UUID tid = trip.getId();
+                    long confirmed = bookingCounts.getOrDefault(tid, 0L);
+                    BigDecimal revenue = revenues.getOrDefault(tid, BigDecimal.ZERO);
+                    double avgRating = avgRatings.getOrDefault(tid, 0.0);
+                    long fbCount = feedbackCounts.getOrDefault(tid, 0L);
+                    int total = (int) confirmed + trip.getSeatsAvailable();
+                    double occupancy = total > 0 ? (double) confirmed / total * 100.0 : 0.0;
+                    return new TripAnalyticsResponse(
+                            tid, trip.getTitle(), trip.getOriginCity(), trip.getDestinationCity(),
+                            trip.getDepartureDate(), trip.getPrice(), trip.getSeatsAvailable(), trip.getStatus(),
+                            confirmed, revenue, occupancy, avgRating, fbCount
+                    );
+                }).toList();
+    }
+
     public TripResponse getById(UUID id) {
         return tripRepository.findById(id)
                 .map(this::toResponse)

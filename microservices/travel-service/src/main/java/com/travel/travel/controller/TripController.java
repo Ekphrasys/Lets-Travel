@@ -212,6 +212,22 @@ public class TripController {
                 .toList();
     }
 
+    @GetMapping("/admin/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public List<TripAnalyticsResponse> adminTravelHistory() {
+        return tripService.getAllAnalytics();
+    }
+
+    @GetMapping("/admin/managers")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public List<AdminDashboardResponse.ManagerPerformance> adminManagersRanking() {
+        List<Trip> allTrips = tripService.getAllTripEntities();
+        List<com.travel.travel.model.Booking> allBookings = bookingRepository.findAll();
+        return buildManagersPerformance(allTrips, allBookings);
+    }
+
     @GetMapping("/admin/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
@@ -228,7 +244,6 @@ public class TripController {
             if ("CONFIRMED".equals(b.getStatus())) {
                 BigDecimal price = b.getTrip().getPrice();
                 totalIncome = totalIncome.add(price);
-
                 String month = b.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).format(monthFormatter);
                 incomeByMonth.put(month, incomeByMonth.getOrDefault(month, BigDecimal.ZERO).add(price));
             }
@@ -258,6 +273,17 @@ public class TripController {
                 })
                 .toList();
 
+        List<AdminDashboardResponse.ManagerPerformance> perfList = buildManagersPerformance(allTrips, allBookings);
+
+        return new AdminDashboardResponse(
+                incomeByMonth, totalIncome, allTrips.size(), topTrips, recentFeedbacks, perfList
+        );
+    }
+
+    private List<AdminDashboardResponse.ManagerPerformance> buildManagersPerformance(
+            List<Trip> allTrips,
+            List<com.travel.travel.model.Booking> allBookings) {
+
         Map<UUID, List<Trip>> tripsByManager = new HashMap<>();
         for (Trip t : allTrips) {
             if (t.getManagerId() != null) {
@@ -269,11 +295,9 @@ public class TripController {
         for (Map.Entry<UUID, List<Trip>> entry : tripsByManager.entrySet()) {
             UUID managerId = entry.getKey();
             List<Trip> mTrips = entry.getValue();
-
-            long mTripsCount = mTrips.size();
-            BigDecimal mIncome = BigDecimal.ZERO;
-
             List<UUID> mTripIds = mTrips.stream().map(Trip::getId).toList();
+
+            BigDecimal mIncome = BigDecimal.ZERO;
             for (com.travel.travel.model.Booking b : allBookings) {
                 if (mTripIds.contains(b.getTrip().getId()) && "CONFIRMED".equals(b.getStatus())) {
                     mIncome = mIncome.add(b.getTrip().getPrice());
@@ -282,20 +306,18 @@ public class TripController {
 
             List<Feedback> mFeedbacks = feedbackRepository.findByTripIdIn(mTripIds);
             double avgRating = mFeedbacks.stream().mapToInt(Feedback::getRating).average().orElse(0.0);
-            double score = (avgRating * 20.0) + (mTripsCount * 5.0) + (mIncome.doubleValue() / 100.0);
+            long feedbackCount = mFeedbacks.size();
+            double score = (avgRating * 20.0) + (mTrips.size() * 5.0) + (mIncome.doubleValue() / 100.0);
 
             UserServiceClient.UserProfile p = userServiceClient.getById(managerId);
             perfList.add(new AdminDashboardResponse.ManagerPerformance(
                     managerId, p.firstName() + " " + p.lastName(), p.email(),
-                    mTripsCount, mIncome, avgRating, score
+                    mTrips.size(), mIncome, avgRating, feedbackCount, score
             ));
         }
 
         perfList.sort((p1, p2) -> Double.compare(p2.performanceScore(), p1.performanceScore()));
-
-        return new AdminDashboardResponse(
-                incomeByMonth, totalIncome, allTrips.size(), topTrips, recentFeedbacks, perfList
-        );
+        return perfList;
     }
 
     @GetMapping("/managers/{managerId}/dashboard")

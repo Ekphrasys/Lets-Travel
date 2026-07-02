@@ -1,5 +1,6 @@
 package com.travel.travel.controller;
 
+import com.travel.travel.dto.AdminManagerReportView;
 import com.travel.travel.dto.CreateReportRequest;
 import com.travel.travel.dto.ManagerProfileResponse;
 import com.travel.travel.dto.ReportDetailResponse;
@@ -27,6 +28,18 @@ public class ManagerController {
     @GetMapping("/{managerId}/profile")
     public ManagerProfileResponse getProfile(@PathVariable UUID managerId) {
         return managerProfileService.getProfile(managerId);
+    }
+
+    @GetMapping("/admin/reports")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<AdminManagerReportView> allReports() {
+        return managerProfileService.findAllReportsForAdmin();
+    }
+
+    @PutMapping("/admin/reports/{id}/resolve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AdminManagerReportView resolveReport(@PathVariable UUID id) {
+        return managerProfileService.resolveReport(id);
     }
 
     @GetMapping("/my/reports")

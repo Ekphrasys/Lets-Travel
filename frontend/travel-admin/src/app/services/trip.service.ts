@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import type { ManagerStats, Trip, TripAnalytics } from '../models/travel.models';
+import type { ManagerPerformance, ManagerStats, Trip, TripAnalytics } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
@@ -63,6 +63,14 @@ export class TripService {
 
   adminDashboard(): Observable<any> {
     return this.http.get<any>(`${this.base}/admin/dashboard`);
+  }
+
+  adminTravelHistory(): Observable<TripAnalytics[]> {
+    return this.http.get<TripAnalytics[]>(`${this.base}/admin/history`);
+  }
+
+  adminManagersRanking(): Observable<ManagerPerformance[]> {
+    return this.http.get<ManagerPerformance[]>(`${this.base}/admin/managers`);
   }
 
   managerDashboard(managerId: string): Observable<any> {

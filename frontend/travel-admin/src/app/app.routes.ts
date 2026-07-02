@@ -9,6 +9,9 @@ import { BookingsComponent } from './pages/bookings/bookings';
 import { RoutesSearchComponent } from './pages/routes-search/routes-search';
 import { AdminUsersComponent } from './pages/admin-users/admin-users';
 import { AdminPaymentsComponent } from './pages/admin-payments/admin-payments';
+import { AdminHistoryComponent } from './pages/admin-history/admin-history';
+import { AdminManagersComponent } from './pages/admin-managers/admin-managers';
+import { AdminReportsComponent } from './pages/admin-reports/admin-reports';
 import { UserFormComponent } from './pages/user-form/user-form';
 import { PaymentFormComponent } from './pages/payment-form/payment-form';
 import { ManagerTripsComponent } from './pages/manager-trips/manager-trips';
@@ -36,6 +39,9 @@ export const routes: Routes = [
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: 'admin/users/new', component: UserFormComponent, canActivate: [adminGuard] },
   { path: 'admin/users/:id/edit', component: UserFormComponent, canActivate: [adminGuard] },
+  { path: 'admin/history', component: AdminHistoryComponent, canActivate: [adminGuard] },
+  { path: 'admin/managers', component: AdminManagersComponent, canActivate: [adminGuard] },
+  { path: 'admin/reports', component: AdminReportsComponent, canActivate: [adminGuard] },
   { path: 'admin/payments', component: AdminPaymentsComponent, canActivate: [adminGuard] },
   { path: 'admin/payments/new', component: PaymentFormComponent, canActivate: [adminGuard] },
   { path: 'admin/payments/:id/edit', component: PaymentFormComponent, canActivate: [adminGuard] },

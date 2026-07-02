@@ -1,0 +1,207 @@
+<div class="page managers-container">
+
+  <header class="managers-header">
+    <div>
+      <h1>Classement des Managers</h1>
+      <p class="subtitle">Performance basée sur les avis voyageurs, les revenus générés et le nombre de voyages organisés</p>
+    </div>
+    <a routerLink="/" class="btn btn-secondary">← Tableau de Bord</a>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">Chargement du classement…</div>
+  } @else if (managers().length === 0) {
+    <div class="empty-state">
+      <p>Aucun manager avec des voyages enregistrés.</p>
+    </div>
+  } @else {
+
+    <!-- ── KPI GLOBAUX ──────────────────────────────────────────── -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-icon">👔</span>
+        <span class="kpi-value">{{ managers().length }}</span>
+        <span class="kpi-label">Managers actifs</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">⭐</span>
+        <span class="kpi-value">{{ globalAvgRating() | number:'1.1-2' }}</span>
+        <span class="kpi-label">Note moyenne globale</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">💰</span>
+        <span class="kpi-value">{{ totalIncome() | number:'1.0-0' }} €</span>
+        <span class="kpi-label">Revenus totaux générés</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">🏆</span>
+        <span class="kpi-value">{{ managers()[0]?.name }}</span>
+        <span class="kpi-label">Meilleur manager</span>
+      </div>
+    </section>
+
+    <!-- ── PODIUM TOP 3 ─────────────────────────────────────────── -->
+    @if (top3().length >= 2) {
+      <section class="card-box podium-section">
+        <h2>🥇 Podium — Top 3 Managers</h2>
+        <div class="podium">
+          <!-- Silver (2nd) -->
+          @if (top3().length >= 2) {
+            <div class="podium-slot silver">
+              <div class="podium-avatar">{{ top3()[1].name[0] }}</div>
+              <div class="podium-medal">🥈</div>
+              <div class="podium-name">{{ top3()[1].name }}</div>
+              <div class="podium-score">{{ top3()[1].performanceScore | number:'1.0-0' }} pts</div>
+              <div class="podium-sub">
+                <span>{{ top3()[1].tripsCount }} voyages</span>
+                <span>{{ top3()[1].averageRating | number:'1.1-1' }}★</span>
+              </div>
+              <div class="podium-block block-silver">2</div>
+            </div>
+          }
+          <!-- Gold (1st) -->
+          <div class="podium-slot gold">
+            <div class="podium-crown">👑</div>
+            <div class="podium-avatar gold-avatar">{{ top3()[0].name[0] }}</div>
+            <div class="podium-medal">🥇</div>
+            <div class="podium-name">{{ top3()[0].name }}</div>
+            <div class="podium-score">{{ top3()[0].performanceScore | number:'1.0-0' }} pts</div>
+            <div class="podium-sub">
+              <span>{{ top3()[0].tripsCount }} voyages</span>
+              <span>{{ top3()[0].averageRating | number:'1.1-1' }}★</span>
+            </div>
+            <div class="podium-block block-gold">1</div>
+          </div>
+          <!-- Bronze (3rd) -->
+          @if (top3().length >= 3) {
+            <div class="podium-slot bronze">
+              <div class="podium-avatar">{{ top3()[2].name[0] }}</div>
+              <div class="podium-medal">🥉</div>
+              <div class="podium-name">{{ top3()[2].name }}</div>
+              <div class="podium-score">{{ top3()[2].performanceScore | number:'1.0-0' }} pts</div>
+              <div class="podium-sub">
+                <span>{{ top3()[2].tripsCount }} voyages</span>
+                <span>{{ top3()[2].averageRating | number:'1.1-1' }}★</span>
+              </div>
+              <div class="podium-block block-bronze">3</div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ── FORMULE DE SCORE ─────────────────────────────────────── -->
+    <section class="card-box formula-section">
+      <h2>📐 Formule de calcul du score</h2>
+      <div class="formula-pills">
+        <div class="formula-pill rating-pill">
+          <span class="pill-label">Note moyenne</span>
+          <span class="pill-formula">× 20 pts</span>
+          <span class="pill-max">max 100 pts</span>
+        </div>
+        <span class="formula-op">+</span>
+        <div class="formula-pill trips-pill">
+          <span class="pill-label">Voyages organisés</span>
+          <span class="pill-formula">× 5 pts</span>
+          <span class="pill-max">illimité</span>
+        </div>
+        <span class="formula-op">+</span>
+        <div class="formula-pill income-pill">
+          <span class="pill-label">Revenus générés</span>
+          <span class="pill-formula">÷ 100 pts</span>
+          <span class="pill-max">illimité</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TABLEAU COMPLET ──────────────────────────────────────── -->
+    <section class="card-box">
+      <h2>📋 Classement complet</h2>
+      <div class="ranking-list">
+        @for (m of managers(); track m.managerId; let i = $index) {
+          <div class="manager-row" [class.row-gold]="i === 0" [class.row-silver]="i === 1" [class.row-bronze]="i === 2">
+
+            <!-- Rank -->
+            <div class="rank-col">
+              @if (i === 0) { <span class="medal">🥇</span> }
+              @else if (i === 1) { <span class="medal">🥈</span> }
+              @else if (i === 2) { <span class="medal">🥉</span> }
+              @else { <span class="rank-num">{{ i + 1 }}</span> }
+            </div>
+
+            <!-- Identity -->
+            <div class="identity-col">
+              <a [routerLink]="['/managers', m.managerId]" class="manager-name">{{ m.name }}</a>
+              <span class="manager-email">{{ m.email }}</span>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-col">
+              <div class="metric-item">
+                <span class="metric-icon">✈️</span>
+                <div class="metric-body">
+                  <span class="metric-val">{{ m.tripsCount }}</span>
+                  <span class="metric-lbl">voyages</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">💰</span>
+                <div class="metric-body">
+                  <span class="metric-val">{{ m.income | number:'1.0-0' }} €</span>
+                  <span class="metric-lbl">revenus</span>
+                </div>
+              </div>
+              <div class="metric-item">
+                <span class="metric-icon">⭐</span>
+                <div class="metric-body">
+                  <span class="metric-val stars-col">{{ stars(m.averageRating) }}</span>
+                  <span class="metric-lbl">{{ m.averageRating | number:'1.1-1' }} / 5 · {{ m.feedbackCount }} avis</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Score breakdown -->
+            <div class="breakdown-col">
+              <div class="breakdown-label">
+                <span>Score de performance</span>
+                <strong>{{ m.performanceScore | number:'1.0-0' }} pts</strong>
+              </div>
+              <div class="breakdown-bar-track">
+                <!-- Rating component (blue) -->
+                <div
+                  class="breakdown-seg seg-rating"
+                  [style.width.%]="m.performanceScore > 0 ? ratingPts(m) / m.performanceScore * 100 : 0"
+                  [title]="'Note : ' + (ratingPts(m) | number:'1.0-0') + ' pts'"
+                ></div>
+                <!-- Trips component (green) -->
+                <div
+                  class="breakdown-seg seg-trips"
+                  [style.width.%]="m.performanceScore > 0 ? tripsPts(m) / m.performanceScore * 100 : 0"
+                  [title]="'Voyages : ' + (tripsPts(m) | number:'1.0-0') + ' pts'"
+                ></div>
+                <!-- Income component (purple) -->
+                <div
+                  class="breakdown-seg seg-income"
+                  [style.width.%]="m.performanceScore > 0 ? incomePts(m) / m.performanceScore * 100 : 0"
+                  [title]="'Revenus : ' + (incomePts(m) | number:'1.0-0') + ' pts'"
+                ></div>
+              </div>
+              <div class="breakdown-legend">
+                <span class="legend-dot dot-rating"></span><span>Note ({{ ratingPts(m) | number:'1.0-0' }} pts)</span>
+                <span class="legend-dot dot-trips"></span><span>Voyages ({{ tripsPts(m) | number:'1.0-0' }} pts)</span>
+                <span class="legend-dot dot-income"></span><span>Revenus ({{ incomePts(m) | number:'1.0-0' }} pts)</span>
+              </div>
+            </div>
+
+            <!-- Profile link -->
+            <div class="action-col">
+              <a [routerLink]="['/managers', m.managerId]" class="btn btn-sm btn-secondary">Voir profil →</a>
+            </div>
+
+          </div>
+        }
+      </div>
+    </section>
+
+  }
+</div>

@@ -19,6 +19,7 @@
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" routerLinkActive="active">Utilisateurs</a>
         <a routerLink="/admin/payments" routerLinkActive="active">Paiements</a>
+        <a routerLink="/admin/history" routerLinkActive="active">Historique & Satisfaction</a>
       }
       <div class="nav-user">
         @if (auth.currentUser(); as user) {

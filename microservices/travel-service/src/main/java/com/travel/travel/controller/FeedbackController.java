@@ -44,6 +44,12 @@ public class FeedbackController {
         return feedbackService.findByUser(userId);
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<FeedbackResponse> allFeedbacks() {
+        return feedbackService.findAll();
+    }
+
     @GetMapping("/my-trips")
     @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER')")
     public List<FeedbackResponse> myTripsFeedback(Authentication authentication) {

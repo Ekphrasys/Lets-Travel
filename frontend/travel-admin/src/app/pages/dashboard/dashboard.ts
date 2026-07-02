@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { TripService } from '../../services/trip.service';
 import { BookingService } from '../../services/booking.service';
 import { AdminService } from '../../services/admin.service';
-import { Trip, Booking, User } from '../../models/travel.models';
+import { AdminReportView, Trip, Booking, User } from '../../models/travel.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -50,7 +50,20 @@ export class DashboardComponent implements OnInit {
 
   // Admin features
   adminDashboardData = signal<any>(null);
-  adminReports = signal<any[]>([]);
+  adminReports = signal<AdminReportView[]>([]);
+
+  monthlyIncomeEntries = computed(() => {
+    const data = this.adminDashboardData();
+    if (!data?.incomeByMonth) return [];
+    return Object.entries(data.incomeByMonth as Record<string, number>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, income]) => ({ month, income: Number(income) }));
+  });
+
+  maxMonthlyIncome = computed(() => {
+    const entries = this.monthlyIncomeEntries();
+    return entries.length ? Math.max(...entries.map(e => e.income), 1) : 1;
+  });
 
   // UI state
   loading = false;
@@ -213,6 +226,10 @@ export class DashboardComponent implements OnInit {
   loadAdminData(): void {
     this.tripService.adminDashboard().subscribe((data: any) => this.adminDashboardData.set(data));
     this.adminService.listReports().subscribe((reports: any[]) => this.adminReports.set(reports));
+  }
+
+  floorRating(value: number): number {
+    return Math.min(5, Math.max(0, Math.floor(value)));
   }
 
   resolveReport(reportId: string): void {
