@@ -13,6 +13,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableMethodSecurity
+
+
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -30,6 +32,13 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/travels", "/api/travels/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .headers(headers -> headers
+                    .contentSecurityPolicy("default-src 'self'")
+                    .and()
+                    .frameOptions().deny()
+                    .and()
+                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)    
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

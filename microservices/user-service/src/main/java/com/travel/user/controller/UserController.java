@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -51,7 +54,37 @@ public class UserController {
 
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
-        return userService.getById(UUID.fromString(authentication.getName()));
+        UUID userId = UUID.fromString(authentication.getName());
+        userService.audit("USER_ME", userId, userId.toString(), "OK");
+        return userService.getById(userId);
+    }
+
+    @PutMapping("/me")
+    public UserResponse updateMe(Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
+        UUID userId = UUID.fromString(authentication.getName());
+        UserResponse response = userService.updateMe(userId, request);
+        userService.audit("PROFILE_UPDATE", userId, userId.toString(), "OK");
+        return response;
+    }
+
+    @PostMapping("/me/consent")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserConsentResponse recordConsent(Authentication authentication, @Valid @RequestBody UserConsentRequest request) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return userService.recordConsent(userId, request);
+    }
+
+    @GetMapping("/me/consent")
+    public List<UserConsentResponse> myConsents(Authentication authentication) {
+        return userService.listConsents(UUID.fromString(authentication.getName()));
+    }
+
+    @GetMapping(value = "/me/export", produces = MediaType.APPLICATION_JSON_VALUE)
+    public UserDataExportResponse exportMyData(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        UserDataExportResponse response = userService.exportUserData(userId);
+        userService.audit("DATA_EXPORT", userId, userId.toString(), "OK");
+        return response;
     }
 
     @GetMapping
@@ -72,10 +105,19 @@ public class UserController {
         return userService.updateUser(id, request);
     }
 
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMe(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        userService.anonymizeAndDelete(userId);
+        userService.audit("ACCOUNT_DELETION", userId, userId.toString(), "ANONYMIZED");
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
+        userService.audit("ADMIN_DELETE", id, id.toString(), "ANONYMIZED");
         userService.delete(id);
     }
 
@@ -113,3 +155,4 @@ public class UserController {
         return userService.getUserStats(id);
     }
 }
+

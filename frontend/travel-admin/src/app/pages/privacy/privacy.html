@@ -1,0 +1,68 @@
+<div class="page privacy-container">
+  <h1>🔒 Confidentialité & Données Personnelles</h1>
+  <p class="subtitle">Vos droits RGPD en un seul endroit.</p>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
+  }
+
+  <!-- Politique de confidentialité -->
+  <section class="card-box">
+    <h2>📄 Notre Politique de Confidentialité</h2>
+    <p>Lets Travel collecte uniquement les données nécessaires au fonctionnement du service :</p>
+    <ul>
+      <li><strong>Données d'identité :</strong> nom, prénom, email</li>
+      <li><strong>Données de réservation :</strong> voyages réservés, paiements, avis</li>
+      <li><strong>Données de connexion :</strong> aucun tracking publicitaire</li>
+    </ul>
+    <p>Vos données sont conservées le temps nécessaire à la fourniture du service et aux obligations légales. Vous disposez d'un droit d'accès, de rectification, d'export et de suppression de vos données.</p>
+  </section>
+
+  <!-- Mise à jour du profil -->
+  <section class="card-box">
+    <h2>✏️ Modifier mon profil</h2>
+    <form [formGroup]="form" (ngSubmit)="updateProfile()" class="privacy-form">
+      <label>
+        Email
+        <input type="email" formControlName="email" required />
+      </label>
+      <label>
+        Prénom
+        <input type="text" formControlName="firstName" required />
+      </label>
+      <label>
+        Nom
+        <input type="text" formControlName="lastName" required />
+      </label>
+      <button type="submit" [disabled]="loading()">Mettre à jour</button>
+    </form>
+  </section>
+
+  <!-- Export RGPD -->
+  <section class="card-box">
+    <h2>📦 Exporter mes données (Droit à la portabilité)</h2>
+    <p>Téléchargez l'ensemble de vos données au format JSON :</p>
+    <button class="btn btn-primary" (click)="exportData()">Télécharger mes données</button>
+  </section>
+
+  <!-- Suppression de compte -->
+  <section class="card-box danger-zone">
+    <h2>🗑️ Supprimer mon compte (Droit à l'oubli)</h2>
+    <p>La suppression anonymise définitivement vos données personnelles (profil, réservations associées, avis, paiements) conformément au RGPD.</p>
+    @if (!showConfirm()) {
+      <button class="btn btn-danger" (click)="showConfirm.set(true)">Supprimer mon compte</button>
+    }
+    @if (showConfirm()) {
+      <div class="confirm-box">
+        <p><strong> Cette action est irréversible. Êtes-vous sûr ?</strong></p>
+        <div class="confirm-actions">
+          <button class="btn btn-danger" [disabled]="deleteLoading()" (click)="deleteAccount()">Oui, supprimer mon compte</button>
+          <button class="btn btn-secondary" [disabled]="deleteLoading()" (click)="showConfirm.set(false)">Annuler</button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

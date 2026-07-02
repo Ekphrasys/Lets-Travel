@@ -20,7 +20,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .headers(headers -> headers
+                    .contentSecurityPolicy("default-src 'self'")
+                    .and()
+                    .frameOptions().deny()
+                    .and()
+                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)
+                );
         return http.build();
     }
 }

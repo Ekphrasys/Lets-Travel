@@ -9,6 +9,7 @@
       <a routerLink="/trips" routerLinkActive="active">Voyages</a>
       <a routerLink="/bookings" routerLinkActive="active">Réservations</a>
       <a routerLink="/routes" routerLinkActive="active">Itinéraires</a>
+      <a routerLink="/privacy" routerLinkActive="active">Confidentialité</a>
       @if (auth.isManagerOrAdmin()) {
         <a routerLink="/manager/dashboard" routerLinkActive="active">Tableau de bord</a>
         <a routerLink="/manager/trips" routerLinkActive="active">Mes voyages</a>
@@ -30,3 +31,5 @@
 <main class="main">
   <router-outlet />
 </main>
+
+<app-cookie-consent />

@@ -31,12 +31,23 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/legal/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/internal").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/internal/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(headers -> headers
+                    .contentSecurityPolicy("default-src 'self'")
+                    .and()
+                    .frameOptions(frame -> frame.deny())
+                    .and()
+                    .httpStrictTransportSecurity(hsts -> hsts
+                        .maxAgeInSeconds(31536000)
+                        .includeSubDomains(true)
+                    )
+                );
         return http.build();
     }
 }

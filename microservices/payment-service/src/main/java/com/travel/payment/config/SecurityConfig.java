@@ -35,6 +35,13 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(headers -> headers
+                    .contentSecurityPolicy("default-src 'self'")
+                    .and()
+                    .frameOptions().deny()
+                    .and()
+                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
