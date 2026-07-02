@@ -31,10 +31,13 @@ export interface Feedback {
 export interface Booking {
   id: string;
   tripId: string;
+  tripTitle?: string;
   userId: string;
   status: string;
   paymentId?: string;
+  clientSecret?: string;
   createdAt: string;
+  tripDepartureDate?: string;
 }
 
 export interface RoutePath {
@@ -72,8 +75,17 @@ export interface Payment {
   userId: string;
   amount: number;
   status: string;
+  paymentMethod: string;
   createdAt: string;
 }
+
+export type PaymentMethod = 'CARD' | 'PAYPAL' | 'BANK_TRANSFER';
+
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string; description: string }[] = [
+  { value: 'CARD', label: 'Carte bancaire', icon: '💳', description: 'Paiement sécurisé par carte de crédit ou débit' },
+  { value: 'PAYPAL', label: 'PayPal', icon: '💰', description: 'Paiement rapide via votre compte PayPal' },
+  { value: 'BANK_TRANSFER', label: 'Virement bancaire', icon: '🏦', description: 'Transfert bancaire direct depuis votre compte' }
+];
 
 export interface UpdatePaymentPayload {
   amount: number;
@@ -100,4 +112,37 @@ export interface TripAnalytics {
   occupancyRate: number;
   averageRating: number;
   feedbackCount: number;
+}
+
+export interface ManagerTripSummary {
+  id: string;
+  title: string;
+  originCity: string;
+  destinationCity: string;
+  departureDate: string;
+  price: number;
+  status: string;
+  confirmedBookings: number;
+  averageRating: number;
+  feedbackCount: number;
+}
+
+export interface ManagerProfile {
+  managerId: string;
+  firstName: string;
+  lastName: string;
+  totalTrips: number;
+  totalTravelers: number;
+  averageRating: number;
+  reportCount: number;
+  trips: ManagerTripSummary[];
+}
+
+export interface ReportDetail {
+  id: string;
+  reporterId: string;
+  reporterFirstName: string;
+  reporterLastName: string;
+  reason: string;
+  createdAt: string;
 }

@@ -21,9 +21,9 @@ public class PaymentServiceClient {
         this.internalApiKey = internalApiKey;
     }
 
-    public PaymentResult createPayment(UUID bookingId, UUID userId, BigDecimal amount, String paymentMethod) {
+    public IntentResult createIntent(UUID bookingId, UUID userId, BigDecimal amount, String paymentMethod) {
         return webClient.post()
-                .uri("/api/payments/internal")
+                .uri("/api/payments/internal/intent")
                 .header("X-Internal-Key", internalApiKey)
                 .bodyValue(Map.of(
                         "bookingId", bookingId,
@@ -32,7 +32,25 @@ public class PaymentServiceClient {
                         "paymentMethod", paymentMethod != null ? paymentMethod : "CARD"
                 ))
                 .retrieve()
+                .bodyToMono(IntentResult.class)
+                .block();
+    }
+
+    public PaymentResult confirmPayment(UUID paymentId) {
+        return webClient.post()
+                .uri("/api/payments/internal/{id}/confirm", paymentId)
+                .header("X-Internal-Key", internalApiKey)
+                .retrieve()
                 .bodyToMono(PaymentResult.class)
+                .block();
+    }
+
+    public void cancelIntent(UUID paymentId) {
+        webClient.post()
+                .uri("/api/payments/internal/{id}/cancel", paymentId)
+                .header("X-Internal-Key", internalApiKey)
+                .retrieve()
+                .toBodilessEntity()
                 .block();
     }
 
@@ -43,6 +61,9 @@ public class PaymentServiceClient {
                 .retrieve()
                 .bodyToMono(PaymentResult.class)
                 .block();
+    }
+
+    public record IntentResult(UUID paymentId, String clientSecret, BigDecimal amount, String currency, String status) {
     }
 
     public record PaymentResult(UUID id, UUID bookingId, UUID userId, BigDecimal amount, String status, Instant createdAt) {

@@ -41,12 +41,16 @@ export class TripService {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
-  search(query: string): Observable<Trip[]> {
-    return this.http.get<Trip[]>(`${this.base}/search?query=${encodeURIComponent(query)}`);
+  search(q: string): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/search`, { params: { q } });
   }
 
-  autocomplete(query: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.base}/search/autocomplete?query=${encodeURIComponent(query)}`);
+  autocomplete(q: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.base}/autocomplete`, { params: { q } });
+  }
+
+  suggestions(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/suggestions`);
   }
 
   recommendations(): Observable<Trip[]> {
@@ -55,10 +59,6 @@ export class TripService {
 
   leaveFeedback(tripId: string, rating: number, comment: string): Observable<any> {
     return this.http.post<any>(`${this.base}/${tripId}/feedback`, { rating, comment });
-  }
-
-  feedbacks(tripId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/${tripId}/feedbacks`);
   }
 
   adminDashboard(): Observable<any> {

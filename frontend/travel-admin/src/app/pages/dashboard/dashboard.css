@@ -34,43 +34,6 @@
   margin-top: 0.25rem;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 9999px;
-  text-transform: uppercase;
-}
-
-.role-badge {
-  background-color: #ebf8ff;
-  color: #2b6cb0;
-  border: 1px solid #bee3f8;
-}
-
-.status-confirmed {
-  background-color: #c6f6d5;
-  color: #22543d;
-}
-
-.status-cancelled {
-  background-color: #fed7d7;
-  color: #742a2a;
-}
-
-.status-pending {
-  background-color: #feebc8;
-  color: #744210;
-}
-
-.badge-score {
-  background-color: #faf5ff;
-  color: #553c9a;
-  font-size: 0.9rem;
-  padding: 0.35rem 0.75rem;
-}
-
 /* Grids and Cards */
 .card-box {
   background: #ffffff;
@@ -252,162 +215,6 @@
   margin-top: 1rem;
 }
 
-/* Buttons */
-.btn {
-  padding: 0.6rem 1.25rem;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-  border: none;
-  font-size: 0.9rem;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
-  background: #3182ce;
-  color: white;
-}
-.btn-primary:hover {
-  background: #2b6cb0;
-}
-
-.btn-secondary {
-  background: #edf2f7;
-  color: #4a5568;
-}
-.btn-secondary:hover {
-  background: #e2e8f0;
-}
-
-.btn-success {
-  background: #48bb78;
-  color: white;
-}
-.btn-success:hover {
-  background: #38a169;
-}
-
-.btn-danger {
-  background: #f56565;
-  color: white;
-}
-.btn-danger:hover {
-  background: #e53e3e;
-}
-
-.btn-purple {
-  background: #805ad5;
-  color: white;
-}
-.btn-purple:hover {
-  background: #6b46c1;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8rem;
-  border-radius: 6px;
-}
-
-/* Modals */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.modal-large {
-  max-width: 700px;
-}
-
-.modal-card h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #1a365d;
-}
-
-.modal-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #4a5568;
-}
-
-.form-control {
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e0;
-  outline: none;
-  font-family: inherit;
-}
-
-.form-control:focus {
-  border-color: #3182ce;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Tables */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  text-align: left;
-}
-
-.table th, .table td {
-  padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.table th {
-  background: #f7fafc;
-  color: #718096;
-  font-weight: 700;
-}
-
-.table tbody tr:hover {
-  background: #f7fafc;
-}
-
 /* Managers and Feedbacks */
 .managers-grid {
   display: grid;
@@ -447,6 +254,13 @@
   margin-bottom: 0.5rem;
 }
 
+.feedback-trip {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2b6cb0;
+  margin: 0 0 0.4rem;
+}
+
 .stars {
   color: #ecc94b;
   letter-spacing: 2px;
@@ -460,13 +274,6 @@
 .date {
   font-size: 0.75rem;
   color: #a0aec0;
-}
-
-.empty-msg {
-  text-align: center;
-  color: #a0aec0;
-  font-style: italic;
-  padding: 2rem;
 }
 
 .card-link.manager {

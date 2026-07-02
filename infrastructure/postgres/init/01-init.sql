@@ -63,21 +63,20 @@ CREATE TABLE travel.feedbacks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_feedbacks_trip_id ON travel.feedbacks(trip_id);
+CREATE UNIQUE INDEX uq_feedbacks_trip_user ON travel.feedbacks(trip_id, user_id);
 CREATE INDEX idx_feedbacks_user_id ON travel.feedbacks(user_id);
 
--- user.reports
-CREATE TABLE "user".reports (
+-- travel.reports
+CREATE TABLE travel.reports (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    manager_id  UUID NOT NULL,
     reporter_id UUID NOT NULL,
-    reported_id UUID NOT NULL,
-    trip_id     UUID,
     reason      TEXT NOT NULL,
-    status      VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_reports_manager_reporter UNIQUE (manager_id, reporter_id)
 );
 
-CREATE INDEX idx_reports_reported ON "user".reports(reported_id);
+CREATE INDEX idx_reports_manager_id ON travel.reports(manager_id);
 
 -- payment.payments
 CREATE TABLE payment.payments (

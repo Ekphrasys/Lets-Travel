@@ -38,6 +38,12 @@ public class FeedbackController {
         return feedbackService.findByTrip(tripId, callerId, isAdmin);
     }
 
+    @GetMapping("/my")
+    public List<FeedbackResponse> myFeedbacks(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return feedbackService.findByUser(userId);
+    }
+
     @GetMapping("/my-trips")
     @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER')")
     public List<FeedbackResponse> myTripsFeedback(Authentication authentication) {

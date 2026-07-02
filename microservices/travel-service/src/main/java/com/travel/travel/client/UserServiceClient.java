@@ -3,6 +3,7 @@ package com.travel.travel.client;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.UUID;
 
@@ -18,20 +19,33 @@ public class UserServiceClient {
         this.internalApiKey = internalApiKey;
     }
 
-    public UserProfile getById(UUID id) {
+    public ManagerInfo getManagerInfo(UUID managerId) {
         try {
             return webClient.get()
-                    .uri("/api/users/internal/{id}", id)
+                    .uri("/api/users/internal/{id}", managerId)
+                    .header("X-Internal-Key", internalApiKey)
+                    .retrieve()
+                    .bodyToMono(ManagerInfo.class)
+                    .block();
+        } catch (WebClientResponseException.NotFound e) {
+            return null;
+        }
+    }
+
+    public record ManagerInfo(UUID id, String email, String firstName, String lastName, String role) {}
+
+    public record UserProfile(UUID id, String email, String firstName, String lastName, String role) {}
+
+    public UserProfile getById(UUID userId) {
+        try {
+            return webClient.get()
+                    .uri("/api/users/internal/{id}", userId)
                     .header("X-Internal-Key", internalApiKey)
                     .retrieve()
                     .bodyToMono(UserProfile.class)
                     .block();
-        } catch (Exception e) {
-            System.err.println("Failed to fetch user profile: " + e.getMessage());
-            return new UserProfile(id, "unknown@travel.com", "Unknown", "User", "TRAVELER");
+        } catch (WebClientResponseException.NotFound e) {
+            return null;
         }
-    }
-
-    public record UserProfile(UUID id, String email, String firstName, String lastName, String role) {
     }
 }

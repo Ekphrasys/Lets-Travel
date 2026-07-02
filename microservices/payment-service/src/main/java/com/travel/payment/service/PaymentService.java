@@ -1,6 +1,7 @@
 package com.travel.payment.service;
 
 import com.travel.payment.dto.CreatePaymentRequest;
+import com.travel.payment.dto.PaymentIntentResponse;
 import com.travel.payment.dto.PaymentResponse;
 import com.travel.payment.dto.UpdatePaymentRequest;
 import com.travel.payment.model.Payment;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,13 +24,51 @@ public class PaymentService {
     }
 
     @Transactional
+    public PaymentIntentResponse createIntent(CreatePaymentRequest request) {
+        Payment payment = new Payment();
+        UUID paymentId = UUID.randomUUID();
+        payment.setId(paymentId);
+        payment.setBookingId(request.bookingId());
+        payment.setUserId(request.userId());
+        payment.setAmount(request.amount());
+        payment.setStatus("REQUIRES_PAYMENT");
+        if (request.paymentMethod() != null) {
+            payment.setPaymentMethod(request.paymentMethod());
+        }
+        paymentRepository.save(payment);
+        String clientSecret = "pi_mock_" + paymentId;
+        return new PaymentIntentResponse(paymentId, clientSecret, request.amount(), "EUR", "REQUIRES_PAYMENT");
+    }
+
+    @Transactional
+    public PaymentResponse confirmIntent(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
+        if (!"REQUIRES_PAYMENT".equals(payment.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Intention de paiement déjà traitée");
+        }
+        payment.setStatus("COMPLETED");
+        return toResponse(paymentRepository.save(payment));
+    }
+
+    @Transactional
+    public void cancelIntent(UUID paymentId) {
+        paymentRepository.findById(paymentId).ifPresent(p -> {
+            if ("REQUIRES_PAYMENT".equals(p.getStatus())) {
+                p.setStatus("CANCELLED");
+                paymentRepository.save(p);
+            }
+        });
+    }
+
+    @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request) {
         Payment payment = new Payment();
         payment.setId(UUID.randomUUID());
         payment.setBookingId(request.bookingId());
         payment.setUserId(request.userId());
         payment.setAmount(request.amount());
-        payment.setStatus(mockPaymentStatus(request.amount()));
+        payment.setStatus("COMPLETED");
         if (request.paymentMethod() != null) {
             payment.setPaymentMethod(request.paymentMethod());
         }
@@ -39,6 +77,12 @@ public class PaymentService {
 
     public List<PaymentResponse> findAll() {
         return paymentRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    public List<PaymentResponse> findByUser(UUID userId) {
+        return paymentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public PaymentResponse getById(UUID paymentId) {
@@ -73,10 +117,6 @@ public class PaymentService {
         }
         payment.setStatus("REFUNDED");
         return toResponse(paymentRepository.save(payment));
-    }
-
-    private String mockPaymentStatus(BigDecimal amount) {
-        return amount.compareTo(BigDecimal.ZERO) > 0 ? "COMPLETED" : "FAILED";
     }
 
     private PaymentResponse toResponse(Payment payment) {

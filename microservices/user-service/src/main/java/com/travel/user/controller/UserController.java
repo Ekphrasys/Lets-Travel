@@ -38,7 +38,7 @@ public class UserController {
 
     @GetMapping("/internal/{id}")
     @PreAuthorize("hasRole('INTERNAL')")
-    public UserResponse getByIdInternal(@PathVariable UUID id) {
+    public UserResponse byIdInternal(@PathVariable UUID id) {
         return userService.getById(id);
     }
 

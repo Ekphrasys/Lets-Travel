@@ -275,6 +275,9 @@
                 <strong>{{ f.userFirstName }} {{ f.userLastName }}</strong>
                 <span class="stars">{{ '★'.repeat(f.rating) }}{{ '☆'.repeat(5 - f.rating) }}</span>
               </div>
+              @if (f.tripTitle) {
+                <p class="feedback-trip">✈️ {{ f.tripTitle }}</p>
+              }
               <p class="comment">" {{ f.comment }} "</p>
               <span class="date">{{ f.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
@@ -284,7 +287,6 @@
         </div>
       </section>
     }
-
   }
 
   <!-- ==================== VUE ADMINISTRATEUR (ADMIN) ==================== -->

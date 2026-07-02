@@ -5,6 +5,7 @@ import com.travel.travel.dto.CreateFeedbackRequest;
 import com.travel.travel.dto.FeedbackResponse;
 import com.travel.travel.model.Feedback;
 import com.travel.travel.model.Trip;
+import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.TripRepository;
 import org.springframework.http.HttpStatus;
@@ -20,19 +21,18 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final TripRepository tripRepository;
+    private final BookingRepository bookingRepository;
+    private final TripGraphService tripGraphService;
     private final UserServiceClient userServiceClient;
-    private final Neo4jRecommendationService neo4jRecommendationService;
 
-    public FeedbackService(
-            FeedbackRepository feedbackRepository,
-            TripRepository tripRepository,
-            UserServiceClient userServiceClient,
-            Neo4jRecommendationService neo4jRecommendationService
-    ) {
+    public FeedbackService(FeedbackRepository feedbackRepository, TripRepository tripRepository,
+                           BookingRepository bookingRepository, TripGraphService tripGraphService,
+                           UserServiceClient userServiceClient) {
         this.feedbackRepository = feedbackRepository;
         this.tripRepository = tripRepository;
+        this.bookingRepository = bookingRepository;
+        this.tripGraphService = tripGraphService;
         this.userServiceClient = userServiceClient;
-        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -40,19 +40,31 @@ public class FeedbackService {
         Trip trip = tripRepository.findById(request.tripId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
 
+        if (!bookingRepository.existsByTripIdAndUserIdAndStatus(trip.getId(), userId, "CONFIRMED")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Vous devez avoir participé à ce voyage pour laisser un avis");
+        }
+
+        if (feedbackRepository.existsByTripIdAndUserId(trip.getId(), userId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Vous avez déjà laissé un avis pour ce voyage");
+        }
+
         Feedback feedback = new Feedback();
         feedback.setId(UUID.randomUUID());
         feedback.setTrip(trip);
         feedback.setUserId(userId);
         feedback.setRating(request.rating());
         feedback.setComment(request.comment());
+        FeedbackResponse response = toResponse(feedbackRepository.save(feedback));
+        tripGraphService.recordFeedback(userId, trip.getId(), request.rating());
+        return response;
+    }
 
-        Feedback saved = feedbackRepository.save(feedback);
-
-        // Sync with Neo4j
-        neo4jRecommendationService.syncFeedback(userId, request.tripId(), request.rating());
-
-        return toResponse(saved);
+    public List<FeedbackResponse> findByUser(UUID userId) {
+        return feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public List<FeedbackResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
@@ -82,6 +94,7 @@ public class FeedbackService {
         return new FeedbackResponse(
                 f.getId(),
                 f.getTrip().getId(),
+                f.getTrip().getTitle(),
                 f.getUserId(),
                 profile.email(),
                 profile.firstName(),
