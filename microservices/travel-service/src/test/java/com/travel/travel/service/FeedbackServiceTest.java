@@ -1,5 +1,6 @@
 package com.travel.travel.service;
 
+import com.travel.travel.client.UserServiceClient;
 import com.travel.travel.dto.CreateFeedbackRequest;
 import com.travel.travel.model.Feedback;
 import com.travel.travel.model.Trip;
@@ -39,6 +40,12 @@ class FeedbackServiceTest {
 
     @Mock
     private BookingRepository bookingRepository;
+
+    @Mock
+    private TripGraphService tripGraphService;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private FeedbackService feedbackService;

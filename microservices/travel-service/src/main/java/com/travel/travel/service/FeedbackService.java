@@ -102,9 +102,9 @@ public class FeedbackService {
                 f.getTrip().getId(),
                 f.getTrip().getTitle(),
                 f.getUserId(),
-                profile.email(),
-                profile.firstName(),
-                profile.lastName(),
+                profile != null ? profile.email() : "",
+                profile != null ? profile.firstName() : "Utilisateur",
+                profile != null ? profile.lastName() : "Inconnu",
                 f.getRating(),
                 f.getComment(),
                 f.getCreatedAt()

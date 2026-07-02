@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, NavigationEnd, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
 @Component({
@@ -10,7 +10,16 @@ import { AuthService } from './services/auth.service';
 })
 export class App {
   auth = inject(AuthService);
+  router = inject(Router);
   menuOpen = signal(false);
+
+  constructor() {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.menuOpen.set(false);
+      }
+    });
+  }
 
   toggleMenu(): void {
     this.menuOpen.update(v => !v);

@@ -2,93 +2,88 @@
   <h1>Mes réservations</h1>
 
   @if (message()) {
-    <p class="message">{{ message() }}</p>
+  <p class="message">{{ message() }}</p>
   }
 
-  <table>
-    <caption>Mes réservations</caption>
-    <thead>
-      <tr>
-        <th>Voyage</th>
-        <th>Statut</th>
-        <th>Paiement</th>
-        <th>Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (b of bookings(); track b.id) {
+  <div class="table-responsive">
+    <table>
+      <caption>Mes réservations</caption>
+      <thead>
+        <tr>
+          <th>Voyage</th>
+          <th>Statut</th>
+          <th>Paiement</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (b of bookings(); track b.id) {
         <tr>
           <td>{{ b.tripTitle ?? b.tripId }}</td>
           <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
           <td>
             @if (b.status === 'CONFIRMED' && getPayment(b.id)) {
-              <span class="payment-badge">{{ paymentMethodLabel(getPayment(b.id)?.paymentMethod) }}</span>
+            <span class="payment-badge">{{ paymentMethodLabel(getPayment(b.id)?.paymentMethod) }}</span>
             } @else if (b.status === 'CONFIRMED') {
-              <span class="payment-badge pm-card">💳 Carte</span>
+            <span class="payment-badge pm-card">💳 Carte</span>
             }
           </td>
           <td>{{ b.createdAt | date:'short' }}</td>
           <td class="actions-cell">
             @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
-              @if (canCancel(b)) {
-                <button class="btn-cancel" (click)="cancel(b.id)">Annuler</button>
-              } @else {
-                <span class="cutoff-notice">Annulation impossible (départ &lt; 3 jours)</span>
-              }
+            @if (canCancel(b)) {
+            <button class="btn-cancel" (click)="cancel(b.id)">Annuler</button>
+            } @else {
+            <span class="cutoff-notice">Annulation impossible (départ &lt; 3 jours)</span>
+            }
             }
             @if (b.status === 'CONFIRMED' && !hasSubmitted(b.id)) {
-              <button class="btn-feedback" (click)="openFeedback(b.id)">⭐ Laisser un avis</button>
+            <button class="btn-feedback" (click)="openFeedback(b.id)">⭐ Laisser un avis</button>
             }
             @if (hasSubmitted(b.id)) {
-              <span class="avis-done">✓ Avis envoyé</span>
+            <span class="avis-done">✓ Avis envoyé</span>
             }
           </td>
         </tr>
 
         @if (activeFeedbackBookingId() === b.id) {
-          <tr class="feedback-row">
-            <td colspan="5">
-              <div class="feedback-form">
-                <p class="feedback-title">Votre avis sur ce voyage</p>
+        <tr class="feedback-row">
+          <td colspan="5">
+            <div class="feedback-form">
+              <p class="feedback-title">Votre avis sur ce voyage</p>
 
-                <div class="star-rating">
-                  @for (star of stars; track star) {
-                    <button
-                      class="star"
-                      [class.active]="star <= feedbackRating()"
-                      (click)="setRating(star)"
-                      type="button">★</button>
-                  }
-                  @if (feedbackRating() > 0) {
-                    <span class="rating-label">{{ feedbackRating() }}/5</span>
-                  }
-                </div>
-
-                <textarea
-                  class="feedback-comment"
-                  placeholder="Commentaire (optionnel)..."
-                  rows="3"
-                  [value]="feedbackComment()"
-                  (input)="feedbackComment.set($any($event.target).value)">
-                </textarea>
-
-                <div class="feedback-actions">
-                  <button
-                    class="btn-submit"
-                    [disabled]="feedbackRating() === 0"
-                    (click)="submitFeedback(b.tripId, b.id)">
-                    Envoyer
-                  </button>
-                  <button class="btn-cancel-feedback" (click)="closeFeedback()">Annuler</button>
-                </div>
+              <div class="star-rating">
+                @for (star of stars; track star) {
+                <button class="star" [class.active]="star <= feedbackRating()" (click)="setRating(star)"
+                  type="button">★</button>
+                }
+                @if (feedbackRating() > 0) {
+                <span class="rating-label">{{ feedbackRating() }}/5</span>
+                }
               </div>
-            </td>
-          </tr>
+
+              <textarea class="feedback-comment" placeholder="Commentaire (optionnel)..." rows="3"
+                [value]="feedbackComment()" (input)="feedbackComment.set($any($event.target).value)">
+              </textarea>
+
+              <div class="feedback-actions">
+                <button class="btn-submit" [disabled]="feedbackRating() === 0"
+                  (click)="submitFeedback(b.tripId, b.id)">
+                  Envoyer
+                </button>
+                <button class="btn-cancel-feedback" (click)="closeFeedback()">Annuler</button>
+              </div>
+            </div>
+          </td>
+        </tr>
         }
-      } @empty {
-        <tr><td colspan="5">Aucune réservation.</td></tr>
-      }
-    </tbody>
-  </table>
+        } @empty {
+        <tr>
+          <td colspan="5">Aucune réservation.</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
 </div>

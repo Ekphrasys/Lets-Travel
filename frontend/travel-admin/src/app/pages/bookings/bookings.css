@@ -11,7 +11,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid #edf2f7;
@@ -30,9 +31,20 @@ th {
   font-weight: 600;
 }
 
-.status.confirmed { background: #c6f6d5; color: #276749; }
-.status.pending { background: #fefcbf; color: #975a16; }
-.status.cancelled { background: #fed7d7; color: #c53030; }
+.status.confirmed {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.status.pending {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.status.cancelled {
+  background: #fed7d7;
+  color: #c53030;
+}
 
 .actions-cell {
   display: flex;
@@ -59,7 +71,9 @@ button {
   color: #2b6cb0;
 }
 
-.btn-feedback:hover { background: #bee3f8; }
+.btn-feedback:hover {
+  background: #bee3f8;
+}
 
 .avis-done {
   font-size: 0.8rem;
@@ -101,8 +115,13 @@ button {
   transition: color 0.1s, transform 0.1s;
 }
 
-.star.active { color: #f6ad55; }
-.star:hover { transform: scale(1.15); }
+.star.active {
+  color: #f6ad55;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
 
 .rating-label {
   font-size: 0.85rem;
@@ -153,6 +172,23 @@ button {
   background: #ebf8ff;
   border-radius: 8px;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .feedback-form {
+    max-width: 100%;
+  }
+
+  .star-rating .star {
+    font-size: 1.5rem;
+  }
 }
 
 .cutoff-notice {

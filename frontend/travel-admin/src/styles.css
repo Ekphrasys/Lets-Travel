@@ -12,6 +12,20 @@ body {
 .page {
   max-width: 1100px;
   margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
 }
 
 /* ── Buttons ── */
@@ -28,22 +42,54 @@ body {
   align-items: center;
 }
 
-.btn:active { transform: scale(0.98); }
+.btn:active {
+  transform: scale(0.98);
+}
 
-.btn-primary  { background: #3182ce; color: white; }
-.btn-primary:hover  { background: #2b6cb0; }
+.btn-primary {
+  background: #3182ce;
+  color: white;
+}
 
-.btn-secondary  { background: #edf2f7; color: #4a5568; }
-.btn-secondary:hover  { background: #e2e8f0; }
+.btn-primary:hover {
+  background: #2b6cb0;
+}
 
-.btn-success  { background: #48bb78; color: white; }
-.btn-success:hover  { background: #38a169; }
+.btn-secondary {
+  background: #edf2f7;
+  color: #4a5568;
+}
 
-.btn-danger  { background: #f56565; color: white; }
-.btn-danger:hover  { background: #e53e3e; }
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
 
-.btn-purple  { background: #805ad5; color: white; }
-.btn-purple:hover  { background: #6b46c1; }
+.btn-success {
+  background: #48bb78;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #38a169;
+}
+
+.btn-danger {
+  background: #f56565;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #e53e3e;
+}
+
+.btn-purple {
+  background: #805ad5;
+  color: white;
+}
+
+.btn-purple:hover {
+  background: #6b46c1;
+}
 
 .btn-sm {
   padding: 0.4rem 0.8rem;
@@ -75,9 +121,15 @@ body {
   gap: 1.5rem;
 }
 
-.modal-large { max-width: 700px; }
+.modal-large {
+  max-width: 700px;
+}
 
-.modal-card h3 { margin: 0; font-size: 1.4rem; color: #1a365d; }
+.modal-card h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #1a365d;
+}
 
 .modal-card label {
   display: flex;
@@ -95,7 +147,9 @@ body {
   font-family: inherit;
 }
 
-.form-control:focus { border-color: #3182ce; }
+.form-control:focus {
+  border-color: #3182ce;
+}
 
 .modal-actions {
   display: flex;
@@ -105,7 +159,10 @@ body {
 }
 
 /* ── Tables ── */
-.table-responsive { width: 100%; overflow-x: auto; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
 
 .table {
   width: 100%;
@@ -115,11 +172,20 @@ body {
 }
 
 .table th,
-.table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
 
-.table th { background: #f7fafc; color: #718096; font-weight: 700; }
+.table th {
+  background: #f7fafc;
+  color: #718096;
+  font-weight: 700;
+}
 
-.table tbody tr:hover { background: #f7fafc; }
+.table tbody tr:hover {
+  background: #f7fafc;
+}
 
 /* ── Badges & status ── */
 .badge {
@@ -131,11 +197,33 @@ body {
   text-transform: uppercase;
 }
 
-.role-badge { background-color: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }
-.badge-score { background-color: #faf5ff; color: #553c9a; font-size: 0.9rem; padding: 0.35rem 0.75rem; }
-.status-confirmed { background-color: #c6f6d5; color: #22543d; }
-.status-cancelled { background-color: #fed7d7; color: #742a2a; }
-.status-pending   { background-color: #feebc8; color: #744210; }
+.role-badge {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+}
+
+.badge-score {
+  background-color: #faf5ff;
+  color: #553c9a;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.status-confirmed {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.status-cancelled {
+  background-color: #fed7d7;
+  color: #742a2a;
+}
+
+.status-pending {
+  background-color: #feebc8;
+  color: #744210;
+}
 
 /* ── Utility ── */
 .empty-msg {

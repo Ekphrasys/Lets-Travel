@@ -23,6 +23,19 @@ CREATE TABLE "user".users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- user.reports
+CREATE TABLE "user".reports (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reporter_id UUID NOT NULL REFERENCES "user".users(id) ON DELETE CASCADE,
+    reported_id UUID NOT NULL REFERENCES "user".users(id) ON DELETE CASCADE,
+    trip_id     UUID,
+    reason      TEXT NOT NULL,
+    status      VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_user_reports_reported_id ON "user".reports(reported_id);
+
 -- travel.trips
 CREATE TABLE travel.trips (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
