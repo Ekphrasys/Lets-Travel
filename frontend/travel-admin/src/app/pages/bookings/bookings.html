@@ -11,6 +11,7 @@
       <tr>
         <th>Voyage</th>
         <th>Statut</th>
+        <th>Paiement</th>
         <th>Date</th>
         <th>Actions</th>
       </tr>
@@ -20,6 +21,13 @@
         <tr>
           <td>{{ b.tripTitle ?? b.tripId }}</td>
           <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
+          <td>
+            @if (b.status === 'CONFIRMED' && getPayment(b.id)) {
+              <span class="payment-badge">{{ paymentMethodLabel(getPayment(b.id)?.paymentMethod) }}</span>
+            } @else if (b.status === 'CONFIRMED') {
+              <span class="payment-badge pm-card">💳 Carte</span>
+            }
+          </td>
           <td>{{ b.createdAt | date:'short' }}</td>
           <td class="actions-cell">
             @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
@@ -40,7 +48,7 @@
 
         @if (activeFeedbackBookingId() === b.id) {
           <tr class="feedback-row">
-            <td colspan="4">
+            <td colspan="5">
               <div class="feedback-form">
                 <p class="feedback-title">Votre avis sur ce voyage</p>
 
@@ -79,7 +87,7 @@
           </tr>
         }
       } @empty {
-        <tr><td colspan="4">Aucune réservation.</td></tr>
+        <tr><td colspan="5">Aucune réservation.</td></tr>
       }
     </tbody>
   </table>

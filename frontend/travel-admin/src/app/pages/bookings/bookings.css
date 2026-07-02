@@ -162,3 +162,14 @@ button {
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
 }
+
+.payment-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  white-space: nowrap;
+}

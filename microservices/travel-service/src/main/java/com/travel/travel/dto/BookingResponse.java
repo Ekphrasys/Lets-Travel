@@ -11,6 +11,7 @@ public record BookingResponse(
         UUID userId,
         String status,
         UUID paymentId,
+        String clientSecret,
         Instant createdAt,
         LocalDate tripDepartureDate
 ) {

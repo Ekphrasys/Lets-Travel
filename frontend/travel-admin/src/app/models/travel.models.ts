@@ -35,6 +35,7 @@ export interface Booking {
   userId: string;
   status: string;
   paymentId?: string;
+  clientSecret?: string;
   createdAt: string;
   tripDepartureDate?: string;
 }
@@ -74,8 +75,17 @@ export interface Payment {
   userId: string;
   amount: number;
   status: string;
+  paymentMethod: string;
   createdAt: string;
 }
+
+export type PaymentMethod = 'CARD' | 'PAYPAL' | 'BANK_TRANSFER';
+
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string; description: string }[] = [
+  { value: 'CARD', label: 'Carte bancaire', icon: '💳', description: 'Paiement sécurisé par carte de crédit ou débit' },
+  { value: 'PAYPAL', label: 'PayPal', icon: '💰', description: 'Paiement rapide via votre compte PayPal' },
+  { value: 'BANK_TRANSFER', label: 'Virement bancaire', icon: '🏦', description: 'Transfert bancaire direct depuis votre compte' }
+];
 
 export interface UpdatePaymentPayload {
   amount: number;

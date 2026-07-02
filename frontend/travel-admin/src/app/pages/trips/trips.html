@@ -57,7 +57,7 @@
                 <a [routerLink]="['/managers', trip.managerId]" class="manager-link">Voir le profil du manager</a>
               }
               <div class="actions">
-                <button (click)="book(trip.id)">Réserver</button>
+                <button (click)="book(trip)">Réserver</button>
               </div>
             </div>
           }
@@ -80,7 +80,7 @@
         <div class="actions">
           @if (auth.isAuthenticated() && trip.seatsAvailable > 0 && trip.status === 'ACTIVE') {
             @if (canBook(trip)) {
-              <button (click)="book(trip.id)">Réserver</button>
+              <button (click)="book(trip)">Réserver</button>
             } @else {
               <span class="cutoff-notice">Réservations fermées (départ dans moins de 3 jours)</span>
             }
@@ -96,3 +96,136 @@
     }
   </div>
 </div>
+
+@if (pendingBookingTrip()) {
+  <div class="modal-overlay" (click)="closePaymentModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <!-- Step indicator -->
+      <div class="step-bar">
+        <span class="step" [class.active]="paymentStep() === 1" [class.done]="paymentStep() === 2">1. Moyen de paiement</span>
+        <span class="step-sep">›</span>
+        <span class="step" [class.active]="paymentStep() === 2">2. Détails du paiement</span>
+      </div>
+
+      <h2 class="modal-title">
+        @if (paymentStep() === 1) { Choisir votre moyen de paiement }
+        @else { Entrer les informations }
+      </h2>
+      <p class="modal-subtitle">
+        {{ pendingBookingTrip()!.title }} —
+        <strong>{{ pendingBookingTrip()!.price | currency:'EUR' }}</strong>
+      </p>
+
+      <!-- STEP 1: Choose method -->
+      @if (paymentStep() === 1) {
+        <div class="payment-methods">
+          @for (method of paymentMethods; track method.value) {
+            @if (method.value !== 'BANK_TRANSFER') {
+              <button
+                class="payment-option"
+                [class.selected]="selectedPaymentMethod() === method.value"
+                (click)="selectedPaymentMethod.set(method.value)"
+                type="button">
+                <span class="pm-icon">{{ method.icon }}</span>
+                <span class="pm-details">
+                  <span class="pm-label">{{ method.label }}</span>
+                  <span class="pm-desc">{{ method.description }}</span>
+                </span>
+                @if (selectedPaymentMethod() === method.value) {
+                  <span class="pm-check">✓</span>
+                }
+              </button>
+            }
+          }
+        </div>
+        <div class="modal-actions">
+          <button class="btn-modal-cancel" (click)="closePaymentModal()" type="button">Annuler</button>
+          <button class="btn-modal-confirm" (click)="proceedToPaymentDetails()" type="button">
+            Continuer →
+          </button>
+        </div>
+      }
+
+      <!-- STEP 2: Card or PayPal form -->
+      @if (paymentStep() === 2) {
+        @if (selectedPaymentMethod() === 'CARD') {
+          <div class="stripe-form">
+            <div class="stripe-badge">
+              <span class="lock-icon">🔒</span> Paiement sécurisé — données chiffrées SSL
+            </div>
+            <div class="form-field">
+              <label class="field-label">Numéro de carte</label>
+              <input
+                class="stripe-input"
+                type="text"
+                placeholder="1234 5678 9012 3456"
+                inputmode="numeric"
+                maxlength="19"
+                [value]="cardNumber()"
+                (input)="formatCardNumber($any($event.target).value)"
+                autocomplete="cc-number" />
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label class="field-label">Date d'expiration</label>
+                <input
+                  class="stripe-input"
+                  type="text"
+                  placeholder="MM/AA"
+                  maxlength="5"
+                  [value]="cardExpiry()"
+                  (input)="formatExpiry($any($event.target).value)"
+                  autocomplete="cc-exp" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">CVC</label>
+                <input
+                  class="stripe-input"
+                  type="text"
+                  placeholder="123"
+                  inputmode="numeric"
+                  maxlength="4"
+                  [value]="cardCvc()"
+                  (input)="formatCvc($any($event.target).value)"
+                  autocomplete="cc-csc" />
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (selectedPaymentMethod() === 'PAYPAL') {
+          <div class="paypal-form">
+            <div class="paypal-logo">
+              <span class="paypal-icon">💰</span>
+              <span class="paypal-name">PayPal</span>
+            </div>
+            <p class="paypal-desc">Connectez-vous à votre compte PayPal pour finaliser le paiement.</p>
+            <div class="form-field">
+              <label class="field-label">Adresse e-mail PayPal</label>
+              <input
+                class="stripe-input"
+                type="email"
+                placeholder="votre@email.com"
+                [value]="paypalEmail()"
+                (input)="paypalEmail.set($any($event.target).value)"
+                autocomplete="email" />
+            </div>
+          </div>
+        }
+
+        <div class="modal-actions">
+          <button class="btn-modal-cancel" (click)="paymentStep.set(1)" type="button">← Retour</button>
+          <button
+            class="btn-modal-confirm"
+            [disabled]="!isPaymentFormValid() || isConfirming()"
+            (click)="confirmPayment()"
+            type="button">
+            @if (isConfirming()) { Traitement en cours… }
+            @else { Payer {{ pendingBookingTrip()!.price | currency:'EUR' }} }
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

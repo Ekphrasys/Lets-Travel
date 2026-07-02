@@ -2,6 +2,7 @@ package com.travel.travel.service;
 
 import com.travel.travel.client.PaymentServiceClient;
 import com.travel.travel.dto.BookingResponse;
+import com.travel.travel.dto.ConfirmBookingPaymentRequest;
 import com.travel.travel.dto.CreateBookingRequest;
 import com.travel.travel.model.Booking;
 import com.travel.travel.model.Trip;
@@ -55,18 +56,42 @@ public class BookingService {
         booking.setTrip(trip);
         booking.setUserId(userId);
         booking.setStatus("PENDING");
-        bookingRepository.save(booking);
 
-        PaymentServiceClient.PaymentResult payment = paymentServiceClient.createPayment(
+        PaymentServiceClient.IntentResult intent = paymentServiceClient.createIntent(
                 booking.getId(), userId, trip.getPrice(), request.paymentMethod()
         );
 
+        booking.setPaymentId(intent.paymentId());
+        bookingRepository.save(booking);
+
+        return toResponse(booking, intent.clientSecret());
+    }
+
+    @Transactional
+    public BookingResponse confirmBookingPayment(UUID bookingId, ConfirmBookingPaymentRequest request, UUID userId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation introuvable"));
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        if (!"PENDING".equals(booking.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà traitée");
+        }
+
+        String expectedSecret = "pi_mock_" + booking.getPaymentId();
+        if (!expectedSecret.equals(request.clientSecret())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Secret de paiement invalide");
+        }
+
+        PaymentServiceClient.PaymentResult payment = paymentServiceClient.confirmPayment(booking.getPaymentId());
+
         if ("COMPLETED".equals(payment.status())) {
             booking.setStatus("CONFIRMED");
-            booking.setPaymentId(payment.id());
+            Trip trip = booking.getTrip();
             trip.setSeatsAvailable(trip.getSeatsAvailable() - 1);
             tripService.saveTrip(trip);
-            BookingResponse response = toResponse(bookingRepository.save(booking));
+            BookingResponse response = toResponse(bookingRepository.save(booking), null);
             tripGraphService.recordParticipation(userId, trip);
             neo4jRecommendationService.syncBooking(userId, trip.getId(), false);
             return response;
@@ -80,7 +105,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> findByUser(UUID userId) {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::toResponse)
+                .map(b -> toResponse(b, null))
                 .toList();
     }
 
@@ -90,7 +115,7 @@ public class BookingService {
         if (!isAdmin && !callerId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
-        return bookingRepository.findByTrip_Id(tripId).stream().map(this::toResponse).toList();
+        return bookingRepository.findByTrip_Id(tripId).stream().map(b -> toResponse(b, null)).toList();
     }
 
     @Transactional
@@ -106,7 +131,6 @@ public class BookingService {
         if ("CANCELLED".equals(booking.getStatus())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà annulée");
         }
-        // Apply 3-day cutoff only for self-service cancellations (not admin/manager management actions)
         boolean isSelfCancel = booking.getUserId().equals(callerId) && !isAdmin && !isManager;
         if (isSelfCancel && ChronoUnit.DAYS.between(LocalDate.now(), booking.getTrip().getDepartureDate()) <= 3) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
@@ -120,17 +144,16 @@ public class BookingService {
             Trip trip = booking.getTrip();
             trip.setSeatsAvailable(trip.getSeatsAvailable() + 1);
             tripService.saveTrip(trip);
+        } else if ("PENDING".equals(booking.getStatus()) && booking.getPaymentId() != null) {
+            paymentServiceClient.cancelIntent(booking.getPaymentId());
         }
 
         booking.setStatus("CANCELLED");
-        
-        // Sync to Neo4j
         neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
-        
-        return toResponse(bookingRepository.save(booking));
+        return toResponse(bookingRepository.save(booking), null);
     }
 
-    private BookingResponse toResponse(Booking booking) {
+    private BookingResponse toResponse(Booking booking, String clientSecret) {
         return new BookingResponse(
                 booking.getId(),
                 booking.getTrip().getId(),
@@ -138,6 +161,7 @@ public class BookingService {
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getPaymentId(),
+                clientSecret,
                 booking.getCreatedAt(),
                 booking.getTrip().getDepartureDate()
         );

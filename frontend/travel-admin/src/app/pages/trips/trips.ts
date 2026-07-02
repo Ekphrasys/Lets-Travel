@@ -6,7 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of, takeUntil }
 import { AuthService } from '../../services/auth.service';
 import { TripService } from '../../services/trip.service';
 import { BookingService } from '../../services/booking.service';
-import { Trip } from '../../models/travel.models';
+import { Trip, PaymentMethod, PAYMENT_METHODS } from '../../models/travel.models';
 
 @Component({
   selector: 'app-trips',
@@ -28,6 +28,22 @@ export class TripsComponent implements OnInit, OnDestroy {
   showSuggestions = signal(false);
   suggestionsOpen = signal(true);
   message = signal('');
+
+  // Payment modal state — step 1: pick method, step 2: enter details
+  pendingBookingTrip = signal<Trip | null>(null);
+  paymentStep = signal<1 | 2>(1);
+  selectedPaymentMethod = signal<PaymentMethod>('CARD');
+  pendingClientSecret = signal<string | null>(null);
+  pendingBookingId = signal<string | null>(null);
+  isConfirming = signal(false);
+
+  // Mock card / PayPal form fields
+  cardNumber = signal('');
+  cardExpiry = signal('');
+  cardCvc = signal('');
+  paypalEmail = signal('');
+
+  readonly paymentMethods = PAYMENT_METHODS;
 
   private destroy$ = new Subject<void>();
 
@@ -88,14 +104,79 @@ export class TripsComponent implements OnInit, OnDestroy {
     setTimeout(() => this.showSuggestions.set(false), 150);
   }
 
-  book(tripId: string): void {
-    this.bookingService.book(tripId).subscribe({
+  book(trip: Trip): void {
+    this.pendingBookingTrip.set(trip);
+    this.paymentStep.set(1);
+    this.selectedPaymentMethod.set('CARD');
+    this.cardNumber.set('');
+    this.cardExpiry.set('');
+    this.cardCvc.set('');
+    this.paypalEmail.set('');
+  }
+
+  proceedToPaymentDetails(): void {
+    const trip = this.pendingBookingTrip();
+    if (!trip) return;
+    this.bookingService.book(trip.id, this.selectedPaymentMethod()).subscribe({
+      next: (booking) => {
+        this.pendingBookingId.set(booking.id);
+        this.pendingClientSecret.set(booking.clientSecret ?? null);
+        this.paymentStep.set(2);
+      },
+      error: () => {
+        this.closePaymentModal();
+        this.message.set('Réservation échouée (plus de places disponibles).');
+      }
+    });
+  }
+
+  confirmPayment(): void {
+    const bookingId = this.pendingBookingId();
+    const clientSecret = this.pendingClientSecret();
+    if (!bookingId || !clientSecret || this.isConfirming()) return;
+    this.isConfirming.set(true);
+    this.bookingService.confirmPayment(bookingId, clientSecret).subscribe({
       next: () => {
-        this.message.set('Réservation confirmée !');
+        this.closePaymentModal();
+        this.message.set('Paiement réussi ! Votre réservation est confirmée.');
         this.load();
       },
-      error: () => this.message.set('Réservation échouée (plus de places ou paiement refusé).')
+      error: () => {
+        this.isConfirming.set(false);
+        this.message.set('Paiement refusé. Veuillez réessayer.');
+      }
     });
+  }
+
+  closePaymentModal(): void {
+    this.pendingBookingTrip.set(null);
+    this.pendingBookingId.set(null);
+    this.pendingClientSecret.set(null);
+    this.paymentStep.set(1);
+    this.isConfirming.set(false);
+  }
+
+  isPaymentFormValid(): boolean {
+    if (this.selectedPaymentMethod() === 'PAYPAL') {
+      return this.paypalEmail().includes('@');
+    }
+    return this.cardNumber().replace(/\s/g, '').length === 16
+      && this.cardExpiry().length >= 4
+      && this.cardCvc().length >= 3;
+  }
+
+  formatCardNumber(raw: string): void {
+    const digits = raw.replace(/\D/g, '').slice(0, 16);
+    this.cardNumber.set(digits.replace(/(.{4})/g, '$1 ').trim());
+  }
+
+  formatExpiry(raw: string): void {
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    this.cardExpiry.set(digits.length >= 3 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits);
+  }
+
+  formatCvc(raw: string): void {
+    this.cardCvc.set(raw.replace(/\D/g, '').slice(0, 4));
   }
 
   isBookable(trip: Trip): boolean {
