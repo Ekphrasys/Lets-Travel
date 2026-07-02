@@ -118,8 +118,30 @@ public class UserService {
         return toReportResponse(report);
     }
 
-    public List<ReportResponse> findAllReports() {
-        return reportRepository.findAll().stream().map(this::toReportResponse).toList();
+    public List<AdminReportView> findAllReports() {
+        return reportRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(Report::getCreatedAt).reversed())
+                .map(report -> {
+                    User reporter = userRepository.findById(report.getReporterId()).orElse(null);
+                    User reported = userRepository.findById(report.getReportedId()).orElse(null);
+                    return new AdminReportView(
+                            report.getId(),
+                            report.getReporterId(),
+                            reporter != null ? reporter.getFirstName() : "Inconnu",
+                            reporter != null ? reporter.getLastName() : "",
+                            reporter != null ? reporter.getEmail() : "",
+                            report.getReportedId(),
+                            reported != null ? reported.getFirstName() : "Inconnu",
+                            reported != null ? reported.getLastName() : "",
+                            reported != null ? reported.getEmail() : "",
+                            reported != null ? reported.getRole() : "",
+                            report.getTripId(),
+                            report.getReason(),
+                            report.getStatus(),
+                            report.getCreatedAt()
+                    );
+                })
+                .toList();
     }
 
     public ReportCountsResponse getReportCounts(UUID userId) {

@@ -20,6 +20,7 @@ public record AdminDashboardResponse(
             long tripsCount,
             BigDecimal income,
             double averageRating,
+            long feedbackCount,
             double performanceScore
     ) {}
 }

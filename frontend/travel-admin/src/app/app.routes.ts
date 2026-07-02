@@ -9,6 +9,9 @@ import { BookingsComponent } from './pages/bookings/bookings';
 import { RoutesSearchComponent } from './pages/routes-search/routes-search';
 import { AdminUsersComponent } from './pages/admin-users/admin-users';
 import { AdminPaymentsComponent } from './pages/admin-payments/admin-payments';
+import { AdminHistoryComponent } from './pages/admin-history/admin-history';
+import { AdminManagersComponent } from './pages/admin-managers/admin-managers';
+import { AdminReportsComponent } from './pages/admin-reports/admin-reports';
 import { UserFormComponent } from './pages/user-form/user-form';
 import { PaymentFormComponent } from './pages/payment-form/payment-form';
 import { ManagerTripsComponent } from './pages/manager-trips/manager-trips';
@@ -16,6 +19,7 @@ import { ManagerFeedbackComponent } from './pages/manager-feedback/manager-feedb
 import { ManagerDashboardComponent } from './pages/manager-dashboard/manager-dashboard';
 import { ManagerSubscribersComponent } from './pages/manager-subscribers/manager-subscribers';
 import { ManagerAnalyticsComponent } from './pages/manager-analytics/manager-analytics';
+import { ManagerProfileComponent } from './pages/manager-profile/manager-profile';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
@@ -31,9 +35,13 @@ export const routes: Routes = [
   { path: 'manager/trips/:id/feedback', component: ManagerFeedbackComponent, canActivate: [managerOrAdminGuard] },
   { path: 'manager/trips/:id/subscribers', component: ManagerSubscribersComponent, canActivate: [managerOrAdminGuard] },
   { path: 'manager/analytics', component: ManagerAnalyticsComponent, canActivate: [managerOrAdminGuard] },
+  { path: 'managers/:managerId', component: ManagerProfileComponent, canActivate: [authGuard] },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: 'admin/users/new', component: UserFormComponent, canActivate: [adminGuard] },
   { path: 'admin/users/:id/edit', component: UserFormComponent, canActivate: [adminGuard] },
+  { path: 'admin/history', component: AdminHistoryComponent, canActivate: [adminGuard] },
+  { path: 'admin/managers', component: AdminManagersComponent, canActivate: [adminGuard] },
+  { path: 'admin/reports', component: AdminReportsComponent, canActivate: [adminGuard] },
   { path: 'admin/payments', component: AdminPaymentsComponent, canActivate: [adminGuard] },
   { path: 'admin/payments/new', component: PaymentFormComponent, canActivate: [adminGuard] },
   { path: 'admin/payments/:id/edit', component: PaymentFormComponent, canActivate: [adminGuard] },

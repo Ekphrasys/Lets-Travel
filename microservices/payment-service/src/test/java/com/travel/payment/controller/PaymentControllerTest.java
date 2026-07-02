@@ -47,6 +47,21 @@ class PaymentControllerTest {
     private PaymentService paymentService;
 
     @Test
+    @WithMockUser(username = "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3")
+    void myPayments_returnsOkForAuthenticatedUser() throws Exception {
+        UUID userId = UUID.fromString("c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3");
+        UUID paymentId = UUID.randomUUID();
+        when(paymentService.findByUser(userId)).thenReturn(List.of(
+                new PaymentResponse(paymentId, UUID.randomUUID(), userId,
+                        BigDecimal.TEN, "COMPLETED", "PAYPAL", Instant.now())));
+
+        mockMvc.perform(get("/api/payments/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].paymentMethod").value("PAYPAL"))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
+    }
+
+    @Test
     @WithMockUser(roles = "ADMIN")
     void create_returnsCreated() throws Exception {
         UUID id = UUID.randomUUID();

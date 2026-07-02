@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import type { ManagerStats, Trip, TripAnalytics } from '../models/travel.models';
+import type { ManagerPerformance, ManagerStats, Trip, TripAnalytics } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
@@ -41,12 +41,16 @@ export class TripService {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
-  search(query: string): Observable<Trip[]> {
-    return this.http.get<Trip[]>(`${this.base}/search?query=${encodeURIComponent(query)}`);
+  search(q: string): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/search`, { params: { q } });
   }
 
-  autocomplete(query: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.base}/search/autocomplete?query=${encodeURIComponent(query)}`);
+  autocomplete(q: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.base}/autocomplete`, { params: { q } });
+  }
+
+  suggestions(): Observable<Trip[]> {
+    return this.http.get<Trip[]>(`${this.base}/suggestions`);
   }
 
   recommendations(): Observable<Trip[]> {
@@ -57,12 +61,16 @@ export class TripService {
     return this.http.post<any>(`${this.base}/${tripId}/feedback`, { rating, comment });
   }
 
-  feedbacks(tripId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/${tripId}/feedbacks`);
-  }
-
   adminDashboard(): Observable<any> {
     return this.http.get<any>(`${this.base}/admin/dashboard`);
+  }
+
+  adminTravelHistory(): Observable<TripAnalytics[]> {
+    return this.http.get<TripAnalytics[]>(`${this.base}/admin/history`);
+  }
+
+  adminManagersRanking(): Observable<ManagerPerformance[]> {
+    return this.http.get<ManagerPerformance[]>(`${this.base}/admin/managers`);
   }
 
   managerDashboard(managerId: string): Observable<any> {

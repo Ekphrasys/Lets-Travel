@@ -1,0 +1,202 @@
+<div class="page reports-container">
+
+  <header class="reports-header">
+    <div>
+      <h1>Centre de Modération</h1>
+      <p class="subtitle">Signalements déposés par les voyageurs contre des voyages ou des managers</p>
+    </div>
+    <a routerLink="/" class="btn btn-secondary">← Tableau de Bord</a>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">Chargement des signalements…</div>
+  } @else {
+
+    <!-- ── KPI SUMMARY ──────────────────────────────────────── -->
+    <div class="kpi-row">
+      <div class="kpi-card" [class.kpi-alert]="totalPending() > 0">
+        <span class="kpi-icon">⚠️</span>
+        <span class="kpi-value">{{ totalPending() }}</span>
+        <span class="kpi-label">En attente au total</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">👤</span>
+        <span class="kpi-value">{{ pendingUserCount() }}</span>
+        <span class="kpi-label">Signalements utilisateurs en attente</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">👔</span>
+        <span class="kpi-value">{{ pendingManagerCount() }}</span>
+        <span class="kpi-label">Signalements managers en attente</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-icon">✅</span>
+        <span class="kpi-value">{{ userReports().length + managerReports().length - totalPending() }}</span>
+        <span class="kpi-label">Résolus au total</span>
+      </div>
+    </div>
+
+    <!-- ── TABS ─────────────────────────────────────────────── -->
+    <div class="tabs-bar">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'user'"
+        (click)="setTab('user')"
+      >
+        Signalements contre utilisateurs / voyages
+        @if (pendingUserCount() > 0) {
+          <span class="tab-badge">{{ pendingUserCount() }}</span>
+        }
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'manager'"
+        (click)="setTab('manager')"
+      >
+        Signalements contre managers
+        @if (pendingManagerCount() > 0) {
+          <span class="tab-badge">{{ pendingManagerCount() }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- ── STATUS FILTER ────────────────────────────────────── -->
+    <div class="filter-bar">
+      <span class="filter-label">Filtrer :</span>
+      <button class="filter-btn" [class.active]="statusFilter() === 'ALL'"     (click)="setFilter('ALL')">Tous</button>
+      <button class="filter-btn" [class.active]="statusFilter() === 'PENDING'" (click)="setFilter('PENDING')">En attente</button>
+      <button class="filter-btn" [class.active]="statusFilter() === 'RESOLVED'" (click)="setFilter('RESOLVED')">Résolus</button>
+    </div>
+
+    <!-- ── USER REPORTS TAB ─────────────────────────────────── -->
+    @if (activeTab() === 'user') {
+      <section class="card-box">
+        <div class="section-head">
+          <h2>👤 Signalements déposés par des voyageurs</h2>
+          <span class="count-badge">{{ filteredUserReports().length }} signalement(s)</span>
+        </div>
+
+        @if (filteredUserReports().length > 0) {
+          <div class="report-list">
+            @for (r of filteredUserReports(); track r.id) {
+              <div class="report-card" [class.card-pending]="r.status === 'PENDING'" [class.card-resolved]="r.status === 'RESOLVED'">
+
+                <div class="report-status-strip">
+                  <span class="status-dot" [class.dot-pending]="r.status === 'PENDING'" [class.dot-resolved]="r.status === 'RESOLVED'"></span>
+                  <span class="status-text">{{ r.status === 'PENDING' ? 'En attente' : 'Résolu' }}</span>
+                  <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+                </div>
+
+                <div class="report-body">
+
+                  <div class="report-parties">
+                    <div class="party reporter">
+                      <span class="party-label">Signalé par</span>
+                      <strong>{{ r.reporterFirstName }} {{ r.reporterLastName }}</strong>
+                      <span class="party-email">{{ r.reporterEmail }}</span>
+                    </div>
+                    <div class="party-arrow">→</div>
+                    <div class="party reported">
+                      <span class="party-label">Contre</span>
+                      <strong>{{ r.reportedFirstName }} {{ r.reportedLastName }}</strong>
+                      <span class="party-email">{{ r.reportedEmail }}</span>
+                      <span class="role-chip">{{ roleLabel(r.reportedRole) }}</span>
+                    </div>
+                  </div>
+
+                  @if (r.tripId) {
+                    <div class="trip-ref">
+                      <span class="trip-ref-label">Voyage concerné :</span>
+                      <span class="trip-ref-id">{{ r.tripId }}</span>
+                    </div>
+                  }
+
+                  <div class="reason-box">
+                    <span class="reason-label">Motif du signalement</span>
+                    <p class="reason-text">{{ r.reason }}</p>
+                  </div>
+
+                </div>
+
+                <div class="report-actions">
+                  @if (r.status === 'PENDING') {
+                    <button (click)="resolveUserReport(r.id)" class="btn btn-sm btn-success">✔ Marquer résolu</button>
+                  } @else {
+                    <span class="resolved-label">✔ Résolu</span>
+                  }
+                </div>
+
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-msg">Aucun signalement {{ statusFilter() !== 'ALL' ? 'avec ce statut' : '' }}.</p>
+        }
+      </section>
+    }
+
+    <!-- ── MANAGER REPORTS TAB ──────────────────────────────── -->
+    @if (activeTab() === 'manager') {
+      <section class="card-box">
+        <div class="section-head">
+          <h2>👔 Signalements déposés contre des managers</h2>
+          <span class="count-badge">{{ filteredManagerReports().length }} signalement(s)</span>
+        </div>
+
+        @if (filteredManagerReports().length > 0) {
+          <div class="report-list">
+            @for (r of filteredManagerReports(); track r.id) {
+              <div class="report-card" [class.card-pending]="r.status === 'PENDING'" [class.card-resolved]="r.status === 'RESOLVED'">
+
+                <div class="report-status-strip">
+                  <span class="status-dot" [class.dot-pending]="r.status === 'PENDING'" [class.dot-resolved]="r.status === 'RESOLVED'"></span>
+                  <span class="status-text">{{ r.status === 'PENDING' ? 'En attente' : 'Résolu' }}</span>
+                  <span class="report-date">{{ r.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+                </div>
+
+                <div class="report-body">
+                  <div class="report-parties">
+                    <div class="party reporter">
+                      <span class="party-label">Signalé par</span>
+                      <strong>{{ r.reporterFirstName }} {{ r.reporterLastName }}</strong>
+                      <span class="party-email">{{ r.reporterEmail }}</span>
+                    </div>
+                    <div class="party-arrow">→</div>
+                    <div class="party reported">
+                      <span class="party-label">Contre le manager</span>
+                      <strong>
+                        <a [routerLink]="['/managers', r.managerId]" class="manager-link">
+                          {{ r.managerFirstName }} {{ r.managerLastName }}
+                        </a>
+                      </strong>
+                      <span class="party-email">{{ r.managerEmail }}</span>
+                      <span class="role-chip chip-manager">Manager</span>
+                    </div>
+                  </div>
+
+                  <div class="reason-box">
+                    <span class="reason-label">Motif du signalement</span>
+                    <p class="reason-text">{{ r.reason }}</p>
+                  </div>
+                </div>
+
+                <div class="report-actions">
+                  @if (r.status === 'PENDING') {
+                    <button (click)="resolveManagerReport(r.id)" class="btn btn-sm btn-success">✔ Marquer résolu</button>
+                  } @else {
+                    <span class="resolved-label">✔ Résolu</span>
+                  }
+                  <a [routerLink]="['/managers', r.managerId]" class="btn btn-sm btn-secondary">Voir profil manager →</a>
+                </div>
+
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-msg">Aucun signalement {{ statusFilter() !== 'ALL' ? 'avec ce statut' : '' }}.</p>
+        }
+      </section>
+    }
+
+  }
+</div>

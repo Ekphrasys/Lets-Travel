@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { CreateUserPayload, Payment, UpdatePaymentPayload, UpdateUserPayload, User } from '../models/travel.models';
+import { AdminManagerReportView, AdminReportView, CreateUserPayload, Payment, UpdatePaymentPayload, UpdateUserPayload, User } from '../models/travel.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -48,12 +48,20 @@ export class AdminService {
     return this.http.delete<void>(`${environment.apiUrl}/api/payments/${id}`);
   }
 
-  listReports(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/api/users/reports`);
+  listReports(): Observable<AdminReportView[]> {
+    return this.http.get<AdminReportView[]>(`${environment.apiUrl}/api/users/reports`);
   }
 
-  resolveReport(id: string): Observable<any> {
-    return this.http.put<any>(`${environment.apiUrl}/api/users/reports/${id}/resolve`, {});
+  resolveReport(id: string): Observable<AdminReportView> {
+    return this.http.put<AdminReportView>(`${environment.apiUrl}/api/users/reports/${id}/resolve`, {});
+  }
+
+  listManagerReports(): Observable<AdminManagerReportView[]> {
+    return this.http.get<AdminManagerReportView[]>(`${environment.apiUrl}/api/managers/admin/reports`);
+  }
+
+  resolveManagerReport(id: string): Observable<AdminManagerReportView> {
+    return this.http.put<AdminManagerReportView>(`${environment.apiUrl}/api/managers/admin/reports/${id}/resolve`, {});
   }
 
   reportUser(payload: { reportedId: string; tripId?: string; reason: string }): Observable<any> {

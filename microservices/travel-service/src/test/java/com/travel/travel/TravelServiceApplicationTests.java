@@ -13,6 +13,9 @@ class TravelServiceApplicationTests {
     @MockBean
     private Neo4jClient neo4jClient;
 
+    @MockBean
+    private com.travel.travel.search.TripSearchRepository tripSearchRepository;
+
     @Test
     void contextLoads() {
     }

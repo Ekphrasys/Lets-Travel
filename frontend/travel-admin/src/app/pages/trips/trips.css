@@ -19,6 +19,102 @@
   font-weight: 600;
 }
 
+.search-wrapper {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 0.75rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+}
+
+.search-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #a0aec0;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.95rem;
+  background: transparent;
+  color: #2d3748;
+}
+
+.search-input::placeholder {
+  color: #a0aec0;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #a0aec0;
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.clear-btn:hover {
+  color: #718096;
+  background: #edf2f7;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.autocomplete-list li {
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  color: #2d3748;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.autocomplete-list li::before {
+  content: '🔍';
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.autocomplete-list li:hover {
+  background: #ebf8ff;
+  color: #2b6cb0;
+}
+
 .message {
   padding: 0.75rem 1rem;
   background: #ebf8ff;
@@ -50,7 +146,8 @@
   font-weight: 500;
 }
 
-.date, .seats {
+.date,
+.seats {
   font-size: 0.875rem;
   color: #718096;
 }
@@ -68,7 +165,8 @@
   flex-wrap: wrap;
 }
 
-.actions button, .btn-edit {
+.actions button,
+.btn-edit {
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -115,10 +213,328 @@
     align-items: stretch;
   }
 
-  .actions button, .btn-edit {
+  .actions button,
+  .btn-edit {
     width: 100%;
     text-align: center;
     padding: 0.65rem;
   }
 }
 
+.manager-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.manager-link:hover {
+  text-decoration: underline;
+}
+
+.cutoff-notice {
+  font-size: 0.8rem;
+  color: #975a16;
+  background: #fefcbf;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.suggestions-section {
+  margin-bottom: 2rem;
+}
+
+.suggestions-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  border-left: 3px solid #3182ce;
+  padding-left: 0.75rem;
+}
+
+.trip-card.suggested {
+  border-left: 3px solid #3182ce;
+}
+
+.suggestions-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.suggestions-toggle:hover .suggestions-title {
+  color: #3182ce;
+}
+
+.toggle-icon {
+  font-size: 1rem;
+  color: #718096;
+  transition: transform 0.2s;
+  transform: rotate(-90deg);
+}
+
+.toggle-icon.open {
+  transform: rotate(0deg);
+}
+
+.suggestions-grid {
+  margin-top: 0;
+}
+
+/* ── Payment modal ────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  margin: 0 0 0.375rem;
+  font-size: 1.25rem;
+  color: #1a365d;
+}
+
+.modal-subtitle {
+  margin: 0 0 1.5rem;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.75rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.payment-option:hover {
+  border-color: #3182ce;
+  background: #ebf8ff;
+}
+
+.payment-option.selected {
+  border-color: #3182ce;
+  background: #ebf8ff;
+}
+
+.pm-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pm-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+}
+
+.pm-label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.pm-desc {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.pm-check {
+  color: #3182ce;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.btn-modal-cancel {
+  padding: 0.5rem 1.25rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #4a5568;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-modal-cancel:hover {
+  background: #f7fafc;
+}
+
+.btn-modal-confirm {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #3182ce;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btn-modal-confirm:hover:not(:disabled) {
+  background: #2b6cb0;
+}
+
+.btn-modal-confirm:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Step indicator */
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.step {
+  font-size: 0.8rem;
+  color: #a0aec0;
+  font-weight: 500;
+}
+
+.step.active {
+  color: #3182ce;
+  font-weight: 700;
+}
+
+.step.done {
+  color: #38a169;
+}
+
+.step-sep {
+  color: #cbd5e0;
+  font-size: 0.9rem;
+}
+
+/* Stripe-style card form */
+.stripe-form {
+  margin-bottom: 1.5rem;
+}
+
+.stripe-badge {
+  font-size: 0.78rem;
+  color: #38a169;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lock-icon {
+  font-size: 0.85rem;
+}
+
+.form-field {
+  margin-bottom: 0.875rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.3rem;
+}
+
+.stripe-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #2d3748;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: 'Courier New', monospace;
+}
+
+.stripe-input:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* PayPal form */
+.paypal-form {
+  margin-bottom: 1.5rem;
+}
+
+.paypal-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.paypal-icon {
+  font-size: 1.75rem;
+}
+
+.paypal-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a365d;
+}
+
+.paypal-desc {
+  font-size: 0.85rem;
+  color: #718096;
+  margin: 0 0 1rem;
+}

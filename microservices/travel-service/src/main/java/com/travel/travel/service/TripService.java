@@ -8,6 +8,9 @@ import com.travel.travel.model.Trip;
 import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.TripRepository;
+import com.travel.travel.search.TripSearchService;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +20,10 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TripService {
@@ -25,21 +31,24 @@ public class TripService {
     private final TripRepository tripRepository;
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
-    private final ElasticsearchService elasticsearchService;
-    private final Neo4jRecommendationService neo4jRecommendationService;
+    private final TripSearchService tripSearchService;
+    private final TripGraphService tripGraphService;
 
-    public TripService(
-            TripRepository tripRepository,
-            BookingRepository bookingRepository,
-            FeedbackRepository feedbackRepository,
-            ElasticsearchService elasticsearchService,
-            Neo4jRecommendationService neo4jRecommendationService
-    ) {
+    public TripService(TripRepository tripRepository, BookingRepository bookingRepository,
+                       FeedbackRepository feedbackRepository, TripSearchService tripSearchService,
+                       TripGraphService tripGraphService) {
         this.tripRepository = tripRepository;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
-        this.elasticsearchService = elasticsearchService;
-        this.neo4jRecommendationService = neo4jRecommendationService;
+        this.tripSearchService = tripSearchService;
+        this.tripGraphService = tripGraphService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void reindexOnStartup() {
+        List<Trip> trips = tripRepository.findAll();
+        tripSearchService.reindexAll(trips);
+        tripGraphService.syncAllTrips(trips);
     }
 
     public List<TripResponse> findAll() {
@@ -99,6 +108,46 @@ public class TripService {
         }).toList();
     }
 
+    public List<TripAnalyticsResponse> getAllAnalytics() {
+        List<Trip> trips = tripRepository.findAll();
+        if (trips.isEmpty()) return List.of();
+
+        List<UUID> tripIds = trips.stream().map(Trip::getId).toList();
+
+        Map<UUID, Long> bookingCounts = new HashMap<>();
+        Map<UUID, BigDecimal> revenues = new HashMap<>();
+        bookingRepository.bookingStatsByTripIds(tripIds, "CONFIRMED").forEach(row -> {
+            UUID tid = (UUID) row[0];
+            bookingCounts.put(tid, ((Number) row[1]).longValue());
+            revenues.put(tid, (BigDecimal) row[2]);
+        });
+
+        Map<UUID, Double> avgRatings = new HashMap<>();
+        Map<UUID, Long> feedbackCounts = new HashMap<>();
+        feedbackRepository.ratingStatsByTripIds(tripIds).forEach(row -> {
+            UUID tid = (UUID) row[0];
+            avgRatings.put(tid, ((Number) row[1]).doubleValue());
+            feedbackCounts.put(tid, ((Number) row[2]).longValue());
+        });
+
+        return trips.stream()
+                .sorted(java.util.Comparator.comparing(Trip::getDepartureDate).reversed())
+                .map(trip -> {
+                    UUID tid = trip.getId();
+                    long confirmed = bookingCounts.getOrDefault(tid, 0L);
+                    BigDecimal revenue = revenues.getOrDefault(tid, BigDecimal.ZERO);
+                    double avgRating = avgRatings.getOrDefault(tid, 0.0);
+                    long fbCount = feedbackCounts.getOrDefault(tid, 0L);
+                    int total = (int) confirmed + trip.getSeatsAvailable();
+                    double occupancy = total > 0 ? (double) confirmed / total * 100.0 : 0.0;
+                    return new TripAnalyticsResponse(
+                            tid, trip.getTitle(), trip.getOriginCity(), trip.getDestinationCity(),
+                            trip.getDepartureDate(), trip.getPrice(), trip.getSeatsAvailable(), trip.getStatus(),
+                            confirmed, revenue, occupancy, avgRating, fbCount
+                    );
+                }).toList();
+    }
+
     public TripResponse getById(UUID id) {
         return tripRepository.findById(id)
                 .map(this::toResponse)
@@ -122,26 +171,10 @@ public class TripService {
         trip.setSeatsAvailable(request.seatsAvailable());
         trip.setStatus("ACTIVE");
         trip.setManagerId(managerId);
-
-        Trip savedTrip = tripRepository.save(trip);
-
-        // Sync to Elasticsearch and Neo4j
-        elasticsearchService.indexTrip(savedTrip);
-        neo4jRecommendationService.syncTrip(
-                savedTrip.getId(),
-                savedTrip.getTitle(),
-                savedTrip.getOriginCity(),
-                savedTrip.getDestinationCity(),
-                savedTrip.getPrice().doubleValue(),
-                savedTrip.getDepartureDate()
-        );
-
-        return toResponse(savedTrip);
-    }
-
-    @Transactional
-    public TripResponse update(UUID id, CreateTripRequest request) {
-        return update(id, request, null, true);
+        Trip saved = tripRepository.save(trip);
+        tripSearchService.indexTrip(saved);
+        tripGraphService.syncTrip(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -158,26 +191,10 @@ public class TripService {
         trip.setDepartureDate(request.departureDate());
         trip.setPrice(request.price());
         trip.setSeatsAvailable(request.seatsAvailable());
-
-        Trip savedTrip = tripRepository.save(trip);
-
-        // Sync to Elasticsearch and Neo4j
-        elasticsearchService.indexTrip(savedTrip);
-        neo4jRecommendationService.syncTrip(
-                savedTrip.getId(),
-                savedTrip.getTitle(),
-                savedTrip.getOriginCity(),
-                savedTrip.getDestinationCity(),
-                savedTrip.getPrice().doubleValue(),
-                savedTrip.getDepartureDate()
-        );
-
-        return toResponse(savedTrip);
-    }
-
-    @Transactional
-    public void delete(UUID id) {
-        delete(id, null, true);
+        Trip saved = tripRepository.save(trip);
+        tripSearchService.indexTrip(saved);
+        tripGraphService.syncTrip(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -188,12 +205,34 @@ public class TripService {
         if (!isAdmin && updaterId != null && !updaterId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
+        tripRepository.deleteById(id);
+        tripSearchService.removeTrip(id);
+    }
 
-        tripRepository.delete(trip);
+    public List<TripResponse> getSuggestions(UUID userId) {
+        Set<UUID> alreadyBooked = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(b -> "CONFIRMED".equals(b.getStatus()) || "PENDING".equals(b.getStatus()))
+                .map(b -> b.getTrip().getId())
+                .collect(Collectors.toSet());
 
-        // Sync delete to Elasticsearch and Neo4j
-        elasticsearchService.deleteTrip(id);
-        neo4jRecommendationService.deleteTrip(id);
+        List<String> suggestedIds = tripGraphService.getSuggestedTripIds(userId);
+        if (suggestedIds.isEmpty()) {
+            return tripRepository.findByStatusOrderByDepartureDateAsc("ACTIVE")
+                    .stream()
+                    .filter(t -> !alreadyBooked.contains(t.getId()))
+                    .limit(5)
+                    .map(this::toResponse)
+                    .toList();
+        }
+        Map<UUID, Trip> tripMap = tripRepository.findAllById(
+                suggestedIds.stream().map(UUID::fromString).toList()
+        ).stream().collect(Collectors.toMap(Trip::getId, t -> t));
+        return suggestedIds.stream()
+                .map(id -> tripMap.get(UUID.fromString(id)))
+                .filter(Objects::nonNull)
+                .filter(t -> !alreadyBooked.contains(t.getId()))
+                .map(this::toResponse)
+                .toList();
     }
 
     public List<Trip> getAllTripEntities() {

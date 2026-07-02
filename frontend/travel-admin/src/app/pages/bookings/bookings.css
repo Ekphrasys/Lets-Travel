@@ -11,7 +11,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid #edf2f7;
@@ -30,9 +31,20 @@ th {
   font-weight: 600;
 }
 
-.status.confirmed { background: #c6f6d5; color: #276749; }
-.status.pending { background: #fefcbf; color: #975a16; }
-.status.cancelled { background: #fed7d7; color: #c53030; }
+.status.confirmed {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.status.pending {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.status.cancelled {
+  background: #fed7d7;
+  color: #c53030;
+}
 
 .actions-cell {
   display: flex;
@@ -59,7 +71,9 @@ button {
   color: #2b6cb0;
 }
 
-.btn-feedback:hover { background: #bee3f8; }
+.btn-feedback:hover {
+  background: #bee3f8;
+}
 
 .avis-done {
   font-size: 0.8rem;
@@ -101,8 +115,13 @@ button {
   transition: color 0.1s, transform 0.1s;
 }
 
-.star.active { color: #f6ad55; }
-.star:hover { transform: scale(1.15); }
+.star.active {
+  color: #f6ad55;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
 
 .rating-label {
   font-size: 0.85rem;
@@ -156,7 +175,9 @@ button {
 }
 
 @media (max-width: 768px) {
-  th, td {
+
+  th,
+  td {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
   }
@@ -170,3 +191,21 @@ button {
   }
 }
 
+.cutoff-notice {
+  font-size: 0.8rem;
+  color: #975a16;
+  background: #fefcbf;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.payment-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  white-space: nowrap;
+}

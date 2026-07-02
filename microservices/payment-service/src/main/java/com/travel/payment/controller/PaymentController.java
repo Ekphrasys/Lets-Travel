@@ -1,12 +1,14 @@
 package com.travel.payment.controller;
 
 import com.travel.payment.dto.CreatePaymentRequest;
+import com.travel.payment.dto.PaymentIntentResponse;
 import com.travel.payment.dto.PaymentResponse;
 import com.travel.payment.dto.UpdatePaymentRequest;
 import com.travel.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +22,32 @@ public class PaymentController {
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    @GetMapping("/me")
+    public List<PaymentResponse> myPayments(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return paymentService.findByUser(userId);
+    }
+
+    @PostMapping("/internal/intent")
+    @PreAuthorize("hasRole('INTERNAL')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public PaymentIntentResponse createIntent(@Valid @RequestBody CreatePaymentRequest request) {
+        return paymentService.createIntent(request);
+    }
+
+    @PostMapping("/internal/{id}/confirm")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public PaymentResponse confirmIntent(@PathVariable UUID id) {
+        return paymentService.confirmIntent(id);
+    }
+
+    @PostMapping("/internal/{id}/cancel")
+    @PreAuthorize("hasRole('INTERNAL')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelIntent(@PathVariable UUID id) {
+        paymentService.cancelIntent(id);
     }
 
     @PostMapping("/internal")
