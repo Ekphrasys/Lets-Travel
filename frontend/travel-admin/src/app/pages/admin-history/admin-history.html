@@ -1,0 +1,183 @@
+<div class="page history-container">
+
+  <header class="history-header">
+    <div>
+      <h1>Historique & Satisfaction</h1>
+      <p class="subtitle">Historique complet des voyages et analyse des retours voyageurs</p>
+    </div>
+    <a routerLink="/" class="btn btn-secondary">← Tableau de Bord</a>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">Chargement des données…</div>
+  } @else {
+
+    <!-- ── SECTION VOYAGES ────────────────────────────────────── -->
+    <section class="card-box">
+      <div class="section-head">
+        <h2>✈️ Historique complet des voyages</h2>
+        <span class="count-badge">{{ filteredTrips().length }} / {{ trips().length }} voyages</span>
+      </div>
+
+      <div class="search-bar">
+        <input
+          type="text"
+          placeholder="Rechercher par titre, ville de départ ou destination…"
+          [value]="tripSearch()"
+          (input)="setTripSearch($any($event.target).value)"
+          class="form-control"
+        />
+      </div>
+
+      <div class="table-responsive">
+        <table class="table" aria-describedby="history-caption">
+          <caption id="history-caption">Historique de tous les voyages avec statistiques</caption>
+          <thead>
+            <tr>
+              <th>Voyage</th>
+              <th>Itinéraire</th>
+              <th>Départ</th>
+              <th>Prix</th>
+              <th>Réservations</th>
+              <th>Revenus</th>
+              <th>Taux remplissage</th>
+              <th>Note moy.</th>
+              <th>Avis</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of filteredTrips(); track t.id) {
+              <tr>
+                <td><strong>{{ t.title }}</strong></td>
+                <td class="route-cell">{{ t.originCity }} → {{ t.destinationCity }}</td>
+                <td class="date-cell">{{ t.departureDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ t.price | number:'1.2-2' }} €</td>
+                <td class="center-cell">
+                  <span class="metric-pill">{{ t.confirmedBookings }}</span>
+                </td>
+                <td class="revenue-cell">{{ t.revenue | number:'1.2-2' }} €</td>
+                <td>
+                  <div class="occupancy-bar-wrap">
+                    <div class="occupancy-bar" [style.width.%]="t.occupancyRate" [class.high]="t.occupancyRate >= 70" [class.mid]="t.occupancyRate >= 40 && t.occupancyRate < 70"></div>
+                    <span class="occupancy-label">{{ t.occupancyRate | number:'1.0-0' }}%</span>
+                  </div>
+                </td>
+                <td class="center-cell">
+                  @if (t.feedbackCount > 0) {
+                    <span class="stars-xs">{{ '★'.repeat(floorRating(t.averageRating)) }}{{ '☆'.repeat(5 - floorRating(t.averageRating)) }}</span>
+                    <span class="rating-num">{{ t.averageRating | number:'1.1-1' }}</span>
+                  } @else {
+                    <span class="no-rating">—</span>
+                  }
+                </td>
+                <td class="center-cell">{{ t.feedbackCount }}</td>
+                <td>
+                  <span class="status-chip status-{{ t.status.toLowerCase() }}">{{ t.status }}</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="10" class="empty-msg">Aucun voyage trouvé.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION SATISFACTION ───────────────────────────────── -->
+    <section class="card-box">
+      <div class="section-head">
+        <h2>💬 Analyse de la satisfaction voyageurs</h2>
+        <span class="count-badge">{{ feedbacks().length }} avis au total</span>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="satisfaction-summary">
+        <div class="summary-card">
+          <span class="summary-icon">⭐</span>
+          <span class="summary-value">{{ averageGlobalRating() | number:'1.1-2' }}</span>
+          <span class="summary-label">Note globale / 5</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-icon">💬</span>
+          <span class="summary-value">{{ feedbacks().length }}</span>
+          <span class="summary-label">Avis reçus</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-icon">😊</span>
+          <span class="summary-value">{{ positiveRatingPct() }}%</span>
+          <span class="summary-label">Avis positifs (≥ 4)</span>
+        </div>
+      </div>
+
+      <!-- Rating distribution -->
+      <div class="rating-dist">
+        <h3>Répartition des notes</h3>
+        <div class="dist-bars">
+          @for (d of ratingDistribution(); track d.star) {
+            <div
+              class="dist-row"
+              [class.active-filter]="ratingFilter() === d.star"
+              (click)="setRatingFilter(d.star)"
+              title="Filtrer par {{ d.star }} étoile(s)"
+            >
+              <span class="dist-star">{{ d.star }}★</span>
+              <div class="dist-track">
+                <div class="dist-fill" [style.width.%]="d.pct" [class.fill-high]="d.star >= 4" [class.fill-low]="d.star <= 2"></div>
+              </div>
+              <span class="dist-count">{{ d.count }}</span>
+              <span class="dist-pct">{{ d.pct | number:'1.0-0' }}%</span>
+            </div>
+          }
+        </div>
+        @if (ratingFilter() !== null) {
+          <button class="btn btn-sm btn-secondary clear-filter" (click)="setRatingFilter(null)">
+            Effacer le filtre ({{ ratingFilter() }}★)
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- ── LISTE DES AVIS ─────────────────────────────────────── -->
+    <section class="card-box">
+      <div class="section-head">
+        <h2>📋 Tous les avis voyageurs</h2>
+        <span class="count-badge">{{ filteredFeedbacks().length }} avis affichés</span>
+      </div>
+
+      @if (filteredFeedbacks().length > 0) {
+        <div class="feedbacks-grid">
+          @for (f of filteredFeedbacks(); track f.id) {
+            <div class="feedback-card" [class.positive]="f.rating >= 4" [class.negative]="f.rating <= 2">
+              <div class="feedback-top">
+                <div class="feedback-user">
+                  <strong>{{ f.userFirstName }} {{ f.userLastName }}</strong>
+                  <small class="feedback-email">{{ f.userEmail }}</small>
+                </div>
+                <div class="feedback-stars">
+                  <span class="stars-display">{{ '★'.repeat(f.rating) }}{{ '☆'.repeat(5 - f.rating) }}</span>
+                  <span class="rating-badge" [class.badge-high]="f.rating >= 4" [class.badge-mid]="f.rating === 3" [class.badge-low]="f.rating <= 2">
+                    {{ f.rating }}/5
+                  </span>
+                </div>
+              </div>
+              @if (f.tripTitle) {
+                <p class="feedback-trip-label">✈️ {{ f.tripTitle }}</p>
+              }
+              @if (f.comment) {
+                <p class="feedback-comment">"{{ f.comment }}"</p>
+              }
+              <span class="feedback-date">{{ f.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty-msg">Aucun avis ne correspond au filtre sélectionné.</p>
+      }
+    </section>
+
+  }
+
+</div>

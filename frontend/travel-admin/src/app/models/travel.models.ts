@@ -19,6 +19,7 @@ export interface Trip {
 export interface Feedback {
   id: string;
   tripId: string;
+  tripTitle?: string;
   userId: string;
   userEmail?: string;
   userFirstName?: string;
@@ -136,6 +137,49 @@ export interface ManagerProfile {
   averageRating: number;
   reportCount: number;
   trips: ManagerTripSummary[];
+}
+
+export interface AdminReportView {
+  id: string;
+  reporterId: string;
+  reporterFirstName: string;
+  reporterLastName: string;
+  reporterEmail: string;
+  reportedId: string;
+  reportedFirstName: string;
+  reportedLastName: string;
+  reportedEmail: string;
+  reportedRole: string;
+  tripId?: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminManagerReportView {
+  id: string;
+  managerId: string;
+  managerFirstName: string;
+  managerLastName: string;
+  managerEmail: string;
+  reporterId: string;
+  reporterFirstName: string;
+  reporterLastName: string;
+  reporterEmail: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface ManagerPerformance {
+  managerId: string;
+  name: string;
+  email: string;
+  tripsCount: number;
+  income: number;
+  averageRating: number;
+  feedbackCount: number;
+  performanceScore: number;
 }
 
 export interface ReportDetail {

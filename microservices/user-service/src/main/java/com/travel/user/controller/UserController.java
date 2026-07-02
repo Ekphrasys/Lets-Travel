@@ -93,7 +93,7 @@ public class UserController {
 
     @GetMapping("/reports")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<ReportResponse> reports() {
+    public List<AdminReportView> reports() {
         return userService.findAllReports();
     }
 

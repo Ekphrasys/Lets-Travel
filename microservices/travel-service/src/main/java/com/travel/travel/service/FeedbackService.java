@@ -61,6 +61,12 @@ public class FeedbackService {
         return response;
     }
 
+    public List<FeedbackResponse> findAll() {
+        return feedbackRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public List<FeedbackResponse> findByUser(UUID userId) {
         return feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)

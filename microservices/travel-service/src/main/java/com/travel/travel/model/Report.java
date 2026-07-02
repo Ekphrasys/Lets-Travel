@@ -24,6 +24,9 @@ public class Report {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
+    @Column(nullable = false)
+    private String status = "PENDING";
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -38,6 +41,9 @@ public class Report {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
 }

@@ -1,6 +1,7 @@
 package com.travel.travel.service;
 
 import com.travel.travel.client.UserServiceClient;
+import com.travel.travel.dto.AdminManagerReportView;
 import com.travel.travel.dto.CreateReportRequest;
 import com.travel.travel.dto.ManagerProfileResponse;
 import com.travel.travel.dto.ManagerTripSummary;
@@ -145,5 +146,52 @@ public class ManagerProfileService {
 
         return new ReportResponse(report.getId(), report.getManagerId(),
                 report.getReporterId(), report.getReason(), report.getCreatedAt());
+    }
+
+    public List<AdminManagerReportView> findAllReportsForAdmin() {
+        return reportRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(report -> {
+                    UserServiceClient.UserProfile manager = userServiceClient.getById(report.getManagerId());
+                    UserServiceClient.UserProfile reporter = userServiceClient.getById(report.getReporterId());
+                    return new AdminManagerReportView(
+                            report.getId(),
+                            report.getManagerId(),
+                            manager != null ? manager.firstName() : "Inconnu",
+                            manager != null ? manager.lastName() : "",
+                            manager != null ? manager.email() : "",
+                            report.getReporterId(),
+                            reporter != null ? reporter.firstName() : "Inconnu",
+                            reporter != null ? reporter.lastName() : "",
+                            reporter != null ? reporter.email() : "",
+                            report.getReason(),
+                            report.getStatus(),
+                            report.getCreatedAt()
+                    );
+                })
+                .toList();
+    }
+
+    @Transactional
+    public AdminManagerReportView resolveReport(UUID reportId) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Signalement introuvable"));
+        report.setStatus("RESOLVED");
+        report = reportRepository.save(report);
+        UserServiceClient.UserProfile manager = userServiceClient.getById(report.getManagerId());
+        UserServiceClient.UserProfile reporter = userServiceClient.getById(report.getReporterId());
+        return new AdminManagerReportView(
+                report.getId(),
+                report.getManagerId(),
+                manager != null ? manager.firstName() : "Inconnu",
+                manager != null ? manager.lastName() : "",
+                manager != null ? manager.email() : "",
+                report.getReporterId(),
+                reporter != null ? reporter.firstName() : "Inconnu",
+                reporter != null ? reporter.lastName() : "",
+                reporter != null ? reporter.email() : "",
+                report.getReason(),
+                report.getStatus(),
+                report.getCreatedAt()
+        );
     }
 }

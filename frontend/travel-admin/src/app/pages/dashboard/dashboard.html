@@ -22,6 +22,9 @@
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" class="btn btn-purple">👥 Gérer les Comptes</a>
         <a routerLink="/admin/payments" class="btn btn-purple">💳 Gérer les Paiements</a>
+        <a routerLink="/admin/managers" class="btn btn-purple">🏆 Classement Managers</a>
+        <a routerLink="/admin/reports" class="btn btn-purple">🚩 Modération</a>
+        <a routerLink="/admin/history" class="btn btn-purple">📋 Historique & Satisfaction</a>
       }
     </div>
   </header>
@@ -291,7 +294,7 @@
 
   <!-- ==================== VUE ADMINISTRATEUR (ADMIN) ==================== -->
   @if (auth.isAdmin()) {
-    
+
     <!-- Statistiques Administrateur -->
     @if (adminDashboardData(); as data) {
       <section class="dashboard-section card-box">
@@ -299,41 +302,143 @@
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-icon">💰</span>
-            <span class="stat-value">{{ data.totalIncome }} €</span>
+            <span class="stat-value">{{ data.totalIncome | number:'1.0-0' }} €</span>
             <span class="stat-label">Chiffre d'Affaires Global</span>
           </div>
           <div class="stat-card">
             <span class="stat-icon">✈️</span>
             <span class="stat-value">{{ data.totalTrips }}</span>
-            <span class="stat-label">Voyages totaux</span>
+            <span class="stat-label">Voyages organisés</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">👔</span>
+            <span class="stat-value">{{ data.managersPerformance?.length ?? 0 }}</span>
+            <span class="stat-label">Managers actifs</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📅</span>
+            <span class="stat-value">{{ monthlyIncomeEntries().length }}</span>
+            <span class="stat-label">Mois d'activité</span>
           </div>
         </div>
       </section>
 
+      <!-- Rapport de Revenus Mensuels -->
+      <section class="dashboard-section card-box">
+        <h2>📈 Revenus par Mois</h2>
+        @if (monthlyIncomeEntries().length > 0) {
+          <div class="income-chart-wrapper">
+            <div class="income-chart">
+              @for (entry of monthlyIncomeEntries(); track entry.month) {
+                <div class="chart-col">
+                  <span class="chart-value">{{ entry.income | number:'1.0-0' }} €</span>
+                  <div class="chart-bar-track">
+                    <div
+                      class="chart-bar"
+                      [style.height.%]="entry.income / maxMonthlyIncome() * 100"
+                    ></div>
+                  </div>
+                  <span class="chart-label">{{ entry.month }}</span>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="income-table-wrapper">
+            <table class="table income-table" aria-describedby="income-caption">
+              <caption id="income-caption">Revenus mensuels détaillés</caption>
+              <thead>
+                <tr>
+                  <th>Mois</th>
+                  <th>Revenus</th>
+                  <th>Part du total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of monthlyIncomeEntries(); track entry.month) {
+                  <tr>
+                    <td><strong>{{ entry.month }}</strong></td>
+                    <td class="income-amount">{{ entry.income | number:'1.2-2' }} €</td>
+                    <td>
+                      <div class="progress-bar-wrapper">
+                        <div class="progress-bar" [style.width.%]="data.totalIncome > 0 ? entry.income / data.totalIncome * 100 : 0"></div>
+                        <span class="progress-label">{{ data.totalIncome > 0 ? (entry.income / data.totalIncome * 100 | number:'1.1-1') : 0 }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty-msg">Aucune donnée de revenus disponible.</p>
+        }
+      </section>
+
+      <!-- Top Voyages (par nombre de réservations) -->
+      <section class="dashboard-section card-box">
+        <h2>🥇 Top Voyages (les plus réservés)</h2>
+        @if (data.topTrips && data.topTrips.length > 0) {
+          <div class="top-trips-grid">
+            @for (trip of data.topTrips; track trip.id; let i = $index) {
+              <div class="top-trip-card" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+                <div class="rank-badge">
+                  @if (i === 0) { 🥇 }
+                  @else if (i === 1) { 🥈 }
+                  @else if (i === 2) { 🥉 }
+                  @else { #{{ i + 1 }} }
+                </div>
+                <h4>{{ trip.title }}</h4>
+                <p class="route">{{ trip.originCity }} → {{ trip.destinationCity }}</p>
+                <p class="date">Départ : {{ trip.departureDate | date:'dd/MM/yyyy' }}</p>
+                <div class="trip-meta">
+                  <span class="price-tag">{{ trip.price | number:'1.2-2' }} €</span>
+                  <span class="seats-tag">{{ trip.seatsAvailable }} places</span>
+                </div>
+                <span class="status-tag status-{{ trip.status?.toLowerCase() }}">{{ trip.status }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-msg">Aucun voyage disponible.</p>
+        }
+      </section>
+
       <!-- Classement des Managers par Score de Performance -->
       <section class="dashboard-section card-box">
-        <h2>🏆 Leaderboard des Managers (Performance & Feedbacks)</h2>
+        <h2>🏆 Classement des Managers (Performance & Feedbacks)</h2>
         <div class="table-responsive">
           <table class="table" aria-describedby="leaderboard-caption">
             <caption id="leaderboard-caption">Classement des managers par score de performance</caption>
             <thead>
               <tr>
+                <th>Rang</th>
                 <th>Manager</th>
-                <th>Nombre Voyages</th>
-                <th>Revenus organisés</th>
+                <th>Voyages organisés</th>
+                <th>Revenus générés</th>
                 <th>Note moyenne</th>
-                <th>Score de Performance</th>
+                <th>Score</th>
               </tr>
             </thead>
             <tbody>
-              @for (m of data.managersPerformance; track m.managerId) {
-                <tr>
-                  <td><strong>{{ m.name }}</strong><br><small>{{ m.email }}</small></td>
+              @for (m of data.managersPerformance; track m.managerId; let i = $index) {
+                <tr [class.row-gold]="i === 0" [class.row-silver]="i === 1" [class.row-bronze]="i === 2">
+                  <td class="rank-cell">
+                    @if (i === 0) { 🥇 }
+                    @else if (i === 1) { 🥈 }
+                    @else if (i === 2) { 🥉 }
+                    @else { {{ i + 1 }} }
+                  </td>
+                  <td><strong>{{ m.name }}</strong><br><small class="text-muted">{{ m.email }}</small></td>
                   <td>{{ m.tripsCount }}</td>
-                  <td>{{ m.income }} €</td>
-                  <td>⭐ {{ m.averageRating | number:'1.1-2' }} / 5</td>
+                  <td>{{ m.income | number:'1.2-2' }} €</td>
+                  <td>
+                    <span class="stars-small">{{ '★'.repeat(floorRating(m.averageRating)) }}{{ '☆'.repeat(5 - floorRating(m.averageRating)) }}</span>
+                    {{ m.averageRating | number:'1.1-1' }}/5
+                  </td>
                   <td><span class="badge badge-score">{{ m.performanceScore | number:'1.0-0' }} pts</span></td>
                 </tr>
+              } @empty {
+                <tr><td colspan="6" class="empty-msg">Aucun manager enregistré.</td></tr>
               }
             </tbody>
           </table>
@@ -341,41 +446,16 @@
       </section>
     }
 
-    <!-- Liste des Signalements (Reports) pour modération -->
+    <!-- Résumé Modération -->
     <section class="dashboard-section card-box">
-      <h2>🚩 Modération : Signalements déposés</h2>
-      <div class="table-responsive">
-        <table class="table" aria-describedby="reports-caption">
-          <caption id="reports-caption">Signalements déposés pour modération</caption>
-          <thead>
-            <tr>
-              <th>ID Signalement</th>
-              <th>Raison</th>
-              <th>Statut</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (r of adminReports(); track r.id) {
-              <tr>
-                <td><small>{{ r.id }}</small></td>
-                <td>{{ r.reason }}</td>
-                <td><span class="badge status-{{ r.status.toLowerCase() }}">{{ r.status }}</span></td>
-                <td>
-                  @if (r.status === 'PENDING') {
-                    <button (click)="resolveReport(r.id)" class="btn btn-sm btn-success">Marquer Résolu</button>
-                  } @else {
-                    -
-                  }
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="4" class="empty-msg">Aucun signalement en attente.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 style="margin:0">🚩 Modération</h2>
+          <p style="margin:0.5rem 0 0; color:#718096; font-size:0.9rem">
+            {{ adminReports().length }} signalement(s) utilisateurs au total
+          </p>
+        </div>
+        <a routerLink="/admin/reports" class="btn btn-primary">Accéder au centre de modération →</a>
       </div>
     </section>
 
