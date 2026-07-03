@@ -21,6 +21,10 @@ export class BookingService {
     return this.http.post<Booking>(this.base, { tripId, paymentMethod });
   }
 
+  confirmPayment(bookingId: string, clientSecret: string): Observable<Booking> {
+    return this.http.post<Booking>(`${this.base}/${bookingId}/confirm-payment`, { clientSecret });
+  }
+
   cancel(id: string): Observable<Booking> {
     return this.http.delete<Booking>(`${this.base}/${id}`);
   }

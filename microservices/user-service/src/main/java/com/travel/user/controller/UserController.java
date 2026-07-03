@@ -41,7 +41,7 @@ public class UserController {
 
     @GetMapping("/internal/{id}")
     @PreAuthorize("hasRole('INTERNAL')")
-    public UserResponse getByIdInternal(@PathVariable UUID id) {
+    public UserResponse byIdInternal(@PathVariable UUID id) {
         return userService.getById(id);
     }
 
@@ -135,7 +135,7 @@ public class UserController {
 
     @GetMapping("/reports")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<ReportResponse> reports() {
+    public List<AdminReportView> reports() {
         return userService.findAllReports();
     }
 

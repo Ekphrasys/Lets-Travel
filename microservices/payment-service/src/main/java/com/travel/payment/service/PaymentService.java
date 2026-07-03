@@ -120,6 +120,12 @@ public class PaymentService {
         return paymentRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    public List<PaymentResponse> findByUser(UUID userId) {
+        return paymentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public PaymentResponse getById(UUID paymentId) {
         return paymentRepository.findById(paymentId)
                 .map(this::toResponse)

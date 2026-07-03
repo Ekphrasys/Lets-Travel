@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,17 +22,20 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
+    private final TripGraphService tripGraphService;
     private final Neo4jRecommendationService neo4jRecommendationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
             PaymentServiceClient paymentServiceClient,
+            TripGraphService tripGraphService,
             Neo4jRecommendationService neo4jRecommendationService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
+        this.tripGraphService = tripGraphService;
         this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
@@ -39,6 +44,10 @@ public class BookingService {
         Trip trip = tripService.getTripEntity(request.tripId());
         if (!"ACTIVE".equals(trip.getStatus()) || trip.getSeatsAvailable() <= 0) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Plus de places disponibles");
+        }
+        if (ChronoUnit.DAYS.between(LocalDate.now(), trip.getDepartureDate()) <= 3) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Réservation impossible : le départ est dans moins de 3 jours");
         }
 
         Booking booking = new Booking();
@@ -54,13 +63,40 @@ public class BookingService {
 
         if ("PROCESSING".equals(payment.status()) || "PENDING".equals(payment.status())) {
             booking.setPaymentId(payment.id());
-            bookingRepository.save(booking);
-            return toResponse(booking);
+            return toResponse(bookingRepository.save(booking), null);
         }
 
         if ("COMPLETED".equals(payment.status())) {
             confirmBooking(booking, trip, payment.id());
-            return toResponse(bookingRepository.save(booking));
+            bookingRepository.save(booking);
+            return toResponse(booking, null);
+        }
+
+        booking.setStatus("CANCELLED");
+        bookingRepository.save(booking);
+        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                "Paiement refusé" + (payment.failedReason() != null ? ": " + payment.failedReason() : ""));
+    }
+
+    @Transactional
+    public BookingResponse confirmBookingPayment(UUID bookingId, com.travel.travel.dto.ConfirmBookingPaymentRequest request, UUID userId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation introuvable"));
+
+        if (!booking.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        if (!"PENDING".equals(booking.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà traitée");
+        }
+
+        PaymentServiceClient.PaymentResult payment = paymentServiceClient.confirmPayment(booking.getPaymentId());
+
+        if ("COMPLETED".equals(payment.status())) {
+            confirmBooking(booking, booking.getTrip(), booking.getPaymentId());
+            tripGraphService.recordParticipation(userId, booking.getTrip());
+            neo4jRecommendationService.syncBooking(userId, booking.getTrip().getId(), false);
+            return toResponse(bookingRepository.save(booking), null);
         }
 
         booking.setStatus("CANCELLED");
@@ -81,7 +117,7 @@ public class BookingService {
             booking.setStatus("CANCELLED");
             bookingRepository.save(booking);
         }
-        return toResponse(booking);
+        return toResponse(booking, null);
     }
 
     private void confirmBooking(Booking booking, Trip trip, UUID paymentId) {
@@ -92,18 +128,20 @@ public class BookingService {
         neo4jRecommendationService.syncBooking(booking.getUserId(), trip.getId(), false);
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByUser(UUID userId) {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::toResponse)
+                .map(b -> toResponse(b, null))
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
         Trip trip = tripService.getTripEntity(tripId);
         if (!isAdmin && !callerId.equals(trip.getManagerId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
         }
-        return bookingRepository.findByTrip_Id(tripId).stream().map(this::toResponse).toList();
+        return bookingRepository.findByTrip_Id(tripId).stream().map(b -> toResponse(b, null)).toList();
     }
 
     @Transactional
@@ -120,8 +158,10 @@ public class BookingService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà annulée");
         }
 
-        if (!isAdmin && java.time.LocalDate.now().plusDays(3).isAfter(booking.getTrip().getDepartureDate())) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Annulation impossible moins de 3 jours avant le départ");
+        boolean isSelfCancel = booking.getUserId().equals(callerId) && !isAdmin && !isManager;
+        if (isSelfCancel && ChronoUnit.DAYS.between(LocalDate.now(), booking.getTrip().getDepartureDate()) <= 3) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Annulation impossible : le départ est dans moins de 3 jours");
         }
 
         if ("CONFIRMED".equals(booking.getStatus())) {
@@ -131,23 +171,26 @@ public class BookingService {
             Trip trip = booking.getTrip();
             trip.setSeatsAvailable(trip.getSeatsAvailable() + 1);
             tripService.saveTrip(trip);
+        } else if ("PENDING".equals(booking.getStatus()) && booking.getPaymentId() != null) {
+            paymentServiceClient.cancelIntent(booking.getPaymentId());
         }
 
         booking.setStatus("CANCELLED");
-
         neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
-
-        return toResponse(bookingRepository.save(booking));
+        return toResponse(bookingRepository.save(booking), null);
     }
 
-    private BookingResponse toResponse(Booking booking) {
+    private BookingResponse toResponse(Booking booking, String clientSecret) {
         return new BookingResponse(
                 booking.getId(),
                 booking.getTrip().getId(),
+                booking.getTrip().getTitle(),
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getPaymentId(),
-                booking.getCreatedAt()
+                clientSecret,
+                booking.getCreatedAt(),
+                booking.getTrip().getDepartureDate()
         );
     }
 }

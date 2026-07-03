@@ -20,6 +20,8 @@ spring:
     authentication:
       username: neo4j
       password: neo4j_secret
+  elasticsearch:
+    uris: http://localhost:9200
 
 eureka:
   client:

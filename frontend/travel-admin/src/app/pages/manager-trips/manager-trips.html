@@ -11,39 +11,42 @@
   } @else if (trips().length === 0) {
     <p class="empty">Vous n'avez pas encore créé de voyages.</p>
   } @else {
-    <table class="data-table" aria-describedby="trips-caption">
-      <caption id="trips-caption">Liste de mes voyages</caption>
-      <thead>
-        <tr>
-          <th>Titre</th>
-          <th>Départ</th>
-          <th>Destination</th>
-          <th>Date</th>
-          <th>Prix</th>
-          <th>Places</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (trip of trips(); track trip.id) {
+    <div class="table-responsive">
+      <table class="data-table" aria-describedby="trips-caption">
+        <caption id="trips-caption">Liste de mes voyages</caption>
+        <thead>
           <tr>
-            <td>{{ trip.title }}</td>
-            <td>{{ trip.originCity }}</td>
-            <td>{{ trip.destinationCity }}</td>
-            <td>{{ trip.departureDate }}</td>
-            <td>{{ trip.price }} €</td>
-            <td>{{ trip.seatsAvailable }}</td>
-            <td><span class="badge" [class.active]="trip.status === 'ACTIVE'">{{ trip.status }}</span></td>
-            <td class="actions">
-              <a [routerLink]="['/trips', trip.id, 'edit']" class="btn-sm">Modifier</a>
-              <a [routerLink]="['/manager/trips', trip.id, 'subscribers']" class="btn-sm secondary">Abonnés</a>
-              <a [routerLink]="['/manager/trips', trip.id, 'feedback']" class="btn-sm secondary">Avis</a>
-              <button class="btn-sm danger" (click)="delete(trip.id)">Supprimer</button>
-            </td>
+            <th>Titre</th>
+            <th>Départ</th>
+            <th>Destination</th>
+            <th>Date</th>
+            <th>Prix</th>
+            <th>Places</th>
+            <th>Statut</th>
+            <th>Actions</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (trip of trips(); track trip.id) {
+            <tr>
+              <td>{{ trip.title }}</td>
+              <td>{{ trip.originCity }}</td>
+              <td>{{ trip.destinationCity }}</td>
+              <td>{{ trip.departureDate }}</td>
+              <td>{{ trip.price }} €</td>
+              <td>{{ trip.seatsAvailable }}</td>
+              <td><span class="badge" [class.active]="trip.status === 'ACTIVE'">{{ trip.status }}</span></td>
+              <td class="actions">
+                <a [routerLink]="['/trips', trip.id, 'edit']" class="btn-sm">Modifier</a>
+                <a [routerLink]="['/manager/trips', trip.id, 'subscribers']" class="btn-sm secondary">Abonnés</a>
+                <a [routerLink]="['/manager/trips', trip.id, 'feedback']" class="btn-sm secondary">Avis</a>
+                <button class="btn-sm danger" (click)="delete(trip.id)">Supprimer</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
   }
 </div>

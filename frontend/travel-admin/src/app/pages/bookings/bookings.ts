@@ -35,21 +35,38 @@ export class BookingsComponent implements OnInit {
   }
 
   load(): void {
+    this.loadingPayments.set(true);
     this.bookingService.myBookings().subscribe((b: Booking[]) => {
       this.bookings.set(b);
+      const promises: Promise<void>[] = [];
       b.forEach(booking => {
         if (booking.paymentId) {
-          this.adminService.getPayment(booking.paymentId).subscribe({
-            next: (p) => this.payments.update(m => new Map(m).set(booking.id, p)),
-            error: () => {}
-          });
+          promises.push(this.adminService.getPayment(booking.paymentId).toPromise().then(
+            p => this.payments.update(m => new Map(m).set(booking.id, p)),
+            () => {}
+          ));
         }
       });
+      Promise.all(promises).finally(() => this.loadingPayments.set(false));
     });
   }
 
   paymentFor(bookingId: string): Payment | null {
     return this.payments().get(bookingId) || null;
+  }
+
+  paymentMethodLabel(method: string | undefined): string {
+    const icons: Record<string, string> = { CARD: '💳', PAYPAL: '💰', BANK_TRANSFER: '🏦', BANK_TRANSFER: '🏦' };
+    const labels: Record<string, string> = { CARD: 'Carte', PAYPAL: 'PayPal', BANK_TRANSFER: 'Virement' };
+    if (!method) return '';
+    return `${icons[method] ?? ''} ${labels[method] ?? method}`;
+  }
+
+  canCancel(booking: Booking): boolean {
+    if (!booking.tripDepartureDate) return true;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + 3);
+    return new Date(booking.tripDepartureDate) > cutoff;
   }
 
   cancel(id: string): void {

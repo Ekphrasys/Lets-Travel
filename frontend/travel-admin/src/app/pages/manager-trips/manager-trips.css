@@ -62,3 +62,16 @@ h1 { margin: 0; }
 
 .loading, .empty { color: #6b7280; margin-top: 2rem; }
 .error { color: #dc2626; margin-top: 2rem; }
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .btn-primary {
+    text-align: center;
+  }
+}
+

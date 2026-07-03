@@ -1,6 +1,7 @@
 package com.travel.travel.controller;
 
 import com.travel.travel.dto.BookingResponse;
+import com.travel.travel.dto.ConfirmBookingPaymentRequest;
 import com.travel.travel.dto.CreateBookingRequest;
 import com.travel.travel.service.BookingService;
 import jakarta.validation.Valid;
@@ -42,6 +43,15 @@ public class BookingController {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
         return bookingService.findByTrip(tripId, callerId, isAdmin);
+    }
+
+    @PostMapping("/{id}/confirm-payment")
+    public BookingResponse confirmPayment(
+            @PathVariable UUID id,
+            @Valid @RequestBody ConfirmBookingPaymentRequest request,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return bookingService.confirmBookingPayment(id, request, userId);
     }
 
     @DeleteMapping("/{id}")

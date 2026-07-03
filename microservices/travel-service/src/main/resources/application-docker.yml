@@ -11,6 +11,8 @@ spring:
     authentication:
       username: neo4j
       password: ${NEO4J_PASSWORD:neo4j_secret}
+  elasticsearch:
+    uris: http://elasticsearch:9200
 
 eureka:
   client:

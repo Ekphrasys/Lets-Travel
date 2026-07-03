@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface TripRepository extends JpaRepository<Trip, UUID> {
 
     List<Trip> findByManagerId(UUID managerId);
+
+    List<Trip> findByStatusOrderByDepartureDateAsc(String status);
 }

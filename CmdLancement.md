@@ -11,7 +11,7 @@ Pour lancer l'ensemble des services (base de données, moteurs de recherche, mic
 cp .env.example .env
 
 # Lancer la compilation et le démarrage de tous les conteneurs en arrière-plan
-docker compose -f infrastructure/docker-compose.yml --project-name travel up --build -d
+sudo docker compose -f infrastructure/docker-compose.yml --project-name travel up --build -d
 ```
 
 ### URLs d'accès local
@@ -30,7 +30,7 @@ Une fois les conteneurs démarrés et sains (`healthy`), vous pouvez accéder au
 Pour arrêter les conteneurs sans perdre les données stockées dans la base de données :
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml --project-name travel down
+sudo docker compose -f infrastructure/docker-compose.yml --project-name travel down
 ```
 
 ### Réinitialisation Complète (Nettoyage des Volumes)

@@ -2,6 +2,7 @@ package com.travel.travel.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel.travel.dto.BookingResponse;
+import com.travel.travel.dto.ConfirmBookingPaymentRequest;
 import com.travel.travel.dto.CreateBookingRequest;
 import com.travel.travel.service.BookingService;
 import org.junit.jupiter.api.Test;
@@ -53,18 +54,38 @@ class BookingControllerTest {
     }
 
     @Test
-    void createBooking_returnsCreated() throws Exception {
+    void createBooking_returnsPendingWithClientSecret() throws Exception {
         UUID userId = UUID.fromString(USER_ID);
         UUID bookingId = UUID.randomUUID();
         UUID tripId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        String clientSecret = "pi_mock_" + paymentId;
         when(bookingService.createBooking(eq(userId), any(CreateBookingRequest.class)))
-                .thenReturn(new BookingResponse(bookingId, tripId, userId, "CONFIRMED",
-                        UUID.randomUUID(), Instant.now()));
+                .thenReturn(new BookingResponse(bookingId, tripId, "Voyage test", userId, "PENDING",
+                        paymentId, clientSecret, Instant.now(), null));
 
         mockMvc.perform(withUser(post("/api/bookings"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateBookingRequest(tripId, "CARD"))))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.clientSecret").value(clientSecret));
+    }
+
+    @Test
+    void confirmPayment_returnsConfirmed() throws Exception {
+        UUID userId = UUID.fromString(USER_ID);
+        UUID bookingId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        String clientSecret = "pi_mock_" + paymentId;
+        when(bookingService.confirmBookingPayment(eq(bookingId), any(ConfirmBookingPaymentRequest.class), eq(userId)))
+                .thenReturn(new BookingResponse(bookingId, UUID.randomUUID(), "Voyage test", userId, "CONFIRMED",
+                        paymentId, null, Instant.now(), null));
+
+        mockMvc.perform(withUser(post("/api/bookings/{id}/confirm-payment", bookingId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ConfirmBookingPaymentRequest(clientSecret))))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
 
@@ -82,8 +103,8 @@ class BookingControllerTest {
         UUID userId = UUID.fromString(USER_ID);
         UUID bookingId = UUID.randomUUID();
         when(bookingService.cancelBooking(eq(bookingId), eq(userId), eq(false)))
-                .thenReturn(new BookingResponse(bookingId, UUID.randomUUID(), userId, "CANCELLED",
-                        null, Instant.now()));
+                .thenReturn(new BookingResponse(bookingId, UUID.randomUUID(), "Voyage test", userId, "CANCELLED",
+                        null, null, Instant.now(), null));
 
         mockMvc.perform(withUser(delete("/api/bookings/{id}", bookingId)))
                 .andExpect(status().isOk())

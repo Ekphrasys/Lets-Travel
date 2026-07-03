@@ -3,6 +3,9 @@ package com.travel.travel.service;
 import com.travel.travel.dto.CreateTripRequest;
 import com.travel.travel.model.Trip;
 import com.travel.travel.repository.TripRepository;
+import com.travel.travel.repository.BookingRepository;
+import com.travel.travel.repository.FeedbackRepository;
+import com.travel.travel.search.TripSearchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,10 +32,16 @@ class TripServiceTest {
     private TripRepository tripRepository;
 
     @Mock
-    private ElasticsearchService elasticsearchService;
+    private BookingRepository bookingRepository;
 
     @Mock
-    private Neo4jRecommendationService neo4jRecommendationService;
+    private FeedbackRepository feedbackRepository;
+
+    @Mock
+    private TripSearchService tripSearchService;
+
+    @Mock
+    private TripGraphService tripGraphService;
 
     @InjectMocks
     private TripService tripService;
@@ -107,7 +116,7 @@ class TripServiceTest {
 
         tripService.delete(id, UUID.randomUUID(), true);
 
-        verify(tripRepository).delete(trip);
+        verify(tripRepository).deleteById(id);
     }
 
     private static CreateTripRequest sampleRequest() {

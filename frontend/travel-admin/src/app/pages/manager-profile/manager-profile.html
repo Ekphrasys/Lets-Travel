@@ -1,0 +1,123 @@
+<div class="page">
+
+  @if (loading()) {
+    <p class="loading">Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (profile(); as p) {
+
+    <div class="profile-header">
+      <div class="avatar">{{ p.firstName[0] }}{{ p.lastName[0] }}</div>
+      <div>
+        <h1>{{ p.firstName }} {{ p.lastName }}</h1>
+        <p class="badge">Travel Manager</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">✈️</div>
+        <div class="stat-value">{{ p.totalTrips }}</div>
+        <div class="stat-label">Voyages organisés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ p.totalTravelers }}</div>
+        <div class="stat-label">Voyageurs accueillis</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value">{{ p.averageRating | number:'1.1-1' }}</div>
+        <div class="stat-label">Note moyenne</div>
+      </div>
+      <div class="stat-card" [class.warn]="p.reportCount > 0">
+        <div class="stat-icon">🚩</div>
+        <div class="stat-value">{{ p.reportCount }}</div>
+        <div class="stat-label">Signalements reçus</div>
+      </div>
+    </div>
+
+    <section class="trips-section">
+      <h2>Voyages passés</h2>
+
+      @if (p.trips.length === 0) {
+        <p class="empty">Aucun voyage pour l'instant.</p>
+      } @else {
+        <div class="trip-list">
+          @for (trip of p.trips; track trip.id) {
+            <div class="trip-row">
+              <div class="trip-info">
+                <span class="trip-title">{{ trip.title }}</span>
+                <span class="trip-route">{{ trip.originCity }} → {{ trip.destinationCity }}</span>
+                <span class="trip-date">{{ trip.departureDate | date:'mediumDate' }}</span>
+                <span class="trip-price">{{ trip.price | currency:'EUR' }}</span>
+                <span class="trip-status" [class.active]="trip.status === 'ACTIVE'">{{ trip.status }}</span>
+              </div>
+              <div class="trip-stats">
+                <span class="stars" [title]="trip.averageRating + '/5'">{{ stars(trip.averageRating) }}</span>
+                <span class="rating-text">{{ trip.averageRating | number:'1.1-1' }}/5</span>
+                <span class="feedback-count">{{ trip.feedbackCount }} avis</span>
+                <span class="travelers-count">{{ trip.confirmedBookings }} voyageurs</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    @if (isOwnProfile) {
+      <section class="report-section">
+        <h2>Signalements reçus</h2>
+        @if (reportsLoading()) {
+          <p class="loading">Chargement...</p>
+        } @else if (myReports().length === 0) {
+          <p class="empty">Aucun signalement reçu.</p>
+        } @else {
+          <div class="reporters-list">
+            @for (r of myReports(); track r.id) {
+              <div class="reporter-row">
+                <div class="reporter-meta">
+                  <span class="reporter-name">{{ r.reporterFirstName }} {{ r.reporterLastName }}</span>
+                  <span class="reporter-date">{{ r.createdAt | date:'mediumDate' }}</span>
+                </div>
+                <p class="reporter-reason">{{ r.reason }}</p>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    } @else {
+      <section class="report-section">
+        <h2>Signaler ce manager</h2>
+
+        @if (reportSent()) {
+          <p class="success">Votre signalement a été envoyé. Merci pour votre contribution.</p>
+        } @else {
+          <p class="report-intro">
+            Si vous avez constaté un comportement problématique, vous pouvez le signaler
+            afin de contribuer à la transparence de la plateforme.
+          </p>
+          <div class="report-form">
+            <textarea
+              [(ngModel)]="reportReason"
+              placeholder="Décrivez le motif du signalement (comportement non professionnel, informations trompeuses, etc.)"
+              rows="4"
+              [disabled]="reportLoading()"
+            ></textarea>
+            @if (reportError()) {
+              <p class="error">{{ reportError() }}</p>
+            }
+            <button
+              class="btn-report"
+              (click)="submitReport()"
+              [disabled]="!reportReason().trim() || reportLoading()"
+            >
+              @if (reportLoading()) { Envoi en cours... } @else { Envoyer le signalement }
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+  }
+</div>
