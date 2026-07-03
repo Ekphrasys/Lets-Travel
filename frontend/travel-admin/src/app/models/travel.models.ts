@@ -34,6 +34,10 @@ export interface Booking {
   userId: string;
   status: string;
   paymentId?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  providerTransactionId?: string;
+  failedReason?: string;
   createdAt: string;
 }
 
@@ -72,6 +76,10 @@ export interface Payment {
   userId: string;
   amount: number;
   status: string;
+  paymentMethod: string;
+  providerTransactionId?: string;
+  providerStatus?: string;
+  failedReason?: string;
   createdAt: string;
 }
 

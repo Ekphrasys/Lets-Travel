@@ -1,22 +1,27 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../services/booking.service';
 import { FeedbackService } from '../../services/feedback.service';
-import { Booking } from '../../models/travel.models';
+import { AdminService } from '../../services/admin.service';
+import { Booking, Payment } from '../../models/travel.models';
 
 @Component({
   selector: 'app-bookings',
-  imports: [DatePipe, FormsModule],
+  imports: [CommonModule, DatePipe, FormsModule],
   templateUrl: './bookings.html',
   styleUrl: './bookings.css'
 })
 export class BookingsComponent implements OnInit {
   private bookingService = inject(BookingService);
   private feedbackService = inject(FeedbackService);
+  private adminService = inject(AdminService);
 
   bookings = signal<Booking[]>([]);
+  payments = signal<Map<string, Payment>>(new Map());
   message = signal('');
+  loadingPayments = signal(false);
 
   activeFeedbackBookingId = signal<string | null>(null);
   feedbackRating = signal(0);
@@ -30,11 +35,26 @@ export class BookingsComponent implements OnInit {
   }
 
   load(): void {
-    this.bookingService.myBookings().subscribe(b => this.bookings.set(b));
+    this.bookingService.myBookings().subscribe((b: Booking[]) => {
+      this.bookings.set(b);
+      b.forEach(booking => {
+        if (booking.paymentId) {
+          this.adminService.getPayment(booking.paymentId).subscribe({
+            next: (p) => this.payments.update(m => new Map(m).set(booking.id, p)),
+            error: () => {}
+          });
+        }
+      });
+    });
+  }
+
+  paymentFor(bookingId: string): Payment | null {
+    return this.payments().get(bookingId) || null;
   }
 
   cancel(id: string): void {
     if (!confirm('Annuler cette réservation ?')) return;
+    this.message.set('');
     this.bookingService.cancel(id).subscribe({
       next: () => {
         this.message.set('Réservation annulée.');
@@ -67,7 +87,7 @@ export class BookingsComponent implements OnInit {
         this.activeFeedbackBookingId.set(null);
         this.message.set('Merci pour votre avis !');
       },
-      error: () => this.message.set('Impossible d\'envoyer l\'avis.')
+      error: () => this.message.set("Impossible d'envoyer l'avis.")
     });
   }
 

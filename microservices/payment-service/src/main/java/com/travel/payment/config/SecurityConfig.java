@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/internal", "/api/payments/internal/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
@@ -39,8 +40,6 @@ public class SecurityConfig {
                     .contentSecurityPolicy("default-src 'self'")
                     .and()
                     .frameOptions().deny()
-                    .and()
-                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

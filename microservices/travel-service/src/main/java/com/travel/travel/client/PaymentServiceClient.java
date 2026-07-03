@@ -45,6 +45,15 @@ public class PaymentServiceClient {
                 .block();
     }
 
-    public record PaymentResult(UUID id, UUID bookingId, UUID userId, BigDecimal amount, String status, Instant createdAt) {
+    public PaymentResult capture(UUID paymentId) {
+        return webClient.post()
+                .uri("/api/payments/internal/{id}/capture", paymentId)
+                .header("X-Internal-Key", internalApiKey)
+                .retrieve()
+                .bodyToMono(PaymentResult.class)
+                .block();
+    }
+
+    public record PaymentResult(UUID id, UUID bookingId, UUID userId, BigDecimal amount, String status, Instant createdAt, String paymentMethod, String providerTransactionId, String providerStatus, String failedReason) {
     }
 }

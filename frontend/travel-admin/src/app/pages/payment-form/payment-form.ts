@@ -22,6 +22,7 @@ export class PaymentFormComponent implements OnInit {
     bookingId: ['', Validators.required],
     userId: ['', Validators.required],
     amount: [0, [Validators.required, Validators.min(0.01)]],
+    paymentMethod: ['CARD', Validators.required],
     status: ['COMPLETED', Validators.required]
   });
 
@@ -35,6 +36,7 @@ export class PaymentFormComponent implements OnInit {
           bookingId: payment.bookingId,
           userId: payment.userId,
           amount: payment.amount,
+          paymentMethod: payment.paymentMethod || 'CARD',
           status: payment.status
         });
       });
@@ -49,7 +51,8 @@ export class PaymentFormComponent implements OnInit {
       : this.adminService.createPayment({
           bookingId: data.bookingId,
           userId: data.userId,
-          amount: data.amount
+          amount: data.amount,
+          paymentMethod: data.paymentMethod
         });
     req.subscribe(() => this.router.navigate(['/admin/payments']));
   }

@@ -53,7 +53,7 @@ export class DashboardComponent implements OnInit {
   adminReports = signal<any[]>([]);
 
   // UI state
-  loading = false;
+  loading = signal(false);
   successMessage = '';
   errorMessage = '';
 
@@ -113,12 +113,21 @@ export class DashboardComponent implements OnInit {
   bookTrip(trip: Trip, paymentMethod: string): void {
     this.errorMessage = '';
     this.successMessage = '';
+    this.loading.set(true);
     this.bookingService.book(trip.id, paymentMethod).subscribe({
-      next: () => {
-        this.successMessage = `Réservation confirmée pour ${trip.title} !`;
-        this.ngOnInit(); // reload all
+      next: (booking: any) => {
+        this.loading.set(false);
+        if (booking.status === 'CONFIRMED') {
+          this.successMessage = `Réservation confirmée pour ${trip.title} !`;
+        } else if (booking.status === 'PENDING') {
+          this.successMessage = `Paiement en cours pour ${trip.title}...`;
+        } else {
+          this.errorMessage = 'Paiement refusé.';
+        }
+        this.ngOnInit();
       },
       error: (err: any) => {
+        this.loading.set(false);
         this.errorMessage = err.error?.message || "Le paiement a échoué ou plus de places.";
       }
     });

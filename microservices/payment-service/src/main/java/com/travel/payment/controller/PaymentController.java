@@ -29,6 +29,12 @@ public class PaymentController {
         return paymentService.createPayment(request);
     }
 
+    @PostMapping("/internal/{id}/capture")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public PaymentResponse captureInternal(@PathVariable UUID id) {
+        return paymentService.capture(id);
+    }
+
     @PostMapping("/internal/{id}/refund")
     @PreAuthorize("hasRole('INTERNAL')")
     public PaymentResponse refundInternal(@PathVariable UUID id) {

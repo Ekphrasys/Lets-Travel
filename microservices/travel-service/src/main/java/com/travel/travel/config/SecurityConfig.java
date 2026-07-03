@@ -36,9 +36,7 @@ public class SecurityConfig {
                 .headers(headers -> headers
                     .contentSecurityPolicy("default-src 'self'")
                     .and()
-                    .frameOptions().deny()
-                    .and()
-                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)    
+                    .frameOptions(frame -> frame.deny())
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

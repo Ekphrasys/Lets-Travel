@@ -17,9 +17,25 @@
     </thead>
     <tbody>
       @for (b of bookings(); track b.id) {
+        @let payment = paymentFor(b.id);
         <tr>
           <td>{{ b.tripId }}</td>
           <td><span class="status" [class]="b.status.toLowerCase()">{{ b.status }}</span></td>
+          <td>
+            @if (payment) {
+              <div>
+                <span class="payment-method">{{ payment.paymentMethod }}</span>
+                <span class="payment-status" [class]="payment.status.toLowerCase()">{{ payment.status }}</span>
+              </div>
+              @if (payment.failedReason) {
+                <small class="failed-reason">{{ payment.failedReason }}</small>
+              }
+            } @else if (b.paymentId) {
+              <span class="payment-loading">Paiement...</span>
+            } @else {
+              <span class="payment-missing">-</span>
+            }
+          </td>
           <td>{{ b.createdAt | date:'short' }}</td>
           <td class="actions-cell">
             @if (b.status === 'CONFIRMED' || b.status === 'PENDING') {

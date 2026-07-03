@@ -36,7 +36,7 @@ export class AdminService {
     return this.http.get<Payment>(`${environment.apiUrl}/api/payments/${id}`);
   }
 
-  createPayment(payload: { bookingId: string; userId: string; amount: number }): Observable<Payment> {
+  createPayment(payload: { bookingId: string; userId: string; amount: number; paymentMethod: string }): Observable<Payment> {
     return this.http.post<Payment>(`${environment.apiUrl}/api/payments`, payload);
   }
 
