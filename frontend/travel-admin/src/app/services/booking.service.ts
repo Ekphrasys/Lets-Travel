@@ -21,8 +21,8 @@ export class BookingService {
     return this.http.post<Booking>(this.base, { tripId, paymentMethod });
   }
 
-  confirmPayment(bookingId: string, clientSecret: string): Observable<Booking> {
-    return this.http.post<Booking>(`${this.base}/${bookingId}/confirm-payment`, { clientSecret });
+  refreshBooking(id: string): Observable<Booking> {
+    return this.http.get<Booking>(`${this.base}/${id}`);
   }
 
   cancel(id: string): Observable<Booking> {
@@ -44,10 +44,6 @@ export class BookingService {
         throw new Error('No payment');
       })
     );
-  }
-
-  refreshBooking(id: string): Observable<Booking> {
-    return this.http.get<Booking>(`${this.base}/${id}`);
   }
 
   searchRoutes(origin: string, destination: string): Observable<RoutePath[]> {

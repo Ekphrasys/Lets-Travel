@@ -80,29 +80,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse confirmBookingPayment(UUID bookingId, com.travel.travel.dto.ConfirmBookingPaymentRequest request, UUID userId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation introuvable"));
-
-        if (!booking.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
-        }
-        if (!"PENDING".equals(booking.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Réservation déjà traitée");
-        }
-
-        PaymentServiceClient.PaymentResult payment = paymentServiceClient.confirmPayment(booking.getPaymentId());
-
-        if ("COMPLETED".equals(payment.status())) {
-            confirmBooking(booking, booking.getTrip(), booking.getPaymentId());
-            tripGraphService.recordParticipation(userId, booking.getTrip());
-            neo4jRecommendationService.syncBooking(userId, booking.getTrip().getId(), false);
-            return toResponse(bookingRepository.save(booking), null);
-        }
-
-        booking.setStatus("CANCELLED");
-        bookingRepository.save(booking);
-        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                "Paiement refusé" + (payment.failedReason() != null ? ": " + payment.failedReason() : ""));
+        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Confirmation de paiement non supportée dans ce flux");
     }
 
     @Transactional
@@ -171,8 +149,6 @@ public class BookingService {
             Trip trip = booking.getTrip();
             trip.setSeatsAvailable(trip.getSeatsAvailable() + 1);
             tripService.saveTrip(trip);
-        } else if ("PENDING".equals(booking.getStatus()) && booking.getPaymentId() != null) {
-            paymentServiceClient.cancelIntent(booking.getPaymentId());
         }
 
         booking.setStatus("CANCELLED");

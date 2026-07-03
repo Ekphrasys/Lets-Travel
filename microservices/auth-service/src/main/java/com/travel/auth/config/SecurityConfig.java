@@ -25,8 +25,6 @@ public class SecurityConfig {
                     .contentSecurityPolicy("default-src 'self'")
                     .and()
                     .frameOptions().deny()
-                    .and()
-                    .httpStrictTransportSecurity().maxAgeInSeconds(31536000)
                 );
         return http.build();
     }

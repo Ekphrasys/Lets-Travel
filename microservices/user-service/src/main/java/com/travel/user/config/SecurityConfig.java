@@ -42,11 +42,6 @@ public class SecurityConfig {
                     .contentSecurityPolicy("default-src 'self'")
                     .and()
                     .frameOptions(frame -> frame.deny())
-                    .and()
-                    .httpStrictTransportSecurity(hsts -> hsts
-                        .maxAgeInSeconds(31536000)
-                        .includeSubDomains(true)
-                    )
                 );
         return http.build();
     }

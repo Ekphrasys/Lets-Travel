@@ -42,8 +42,8 @@ export class BookingsComponent implements OnInit {
       b.forEach(booking => {
         if (booking.paymentId) {
           promises.push(this.adminService.getPayment(booking.paymentId).toPromise().then(
-            p => this.payments.update(m => new Map(m).set(booking.id, p)),
-            () => {}
+            (p) => p ? this.payments.update(m => new Map(m).set(booking.id, p)) : Promise.resolve(),
+            () => Promise.resolve()
           ));
         }
       });
@@ -56,7 +56,7 @@ export class BookingsComponent implements OnInit {
   }
 
   paymentMethodLabel(method: string | undefined): string {
-    const icons: Record<string, string> = { CARD: '💳', PAYPAL: '💰', BANK_TRANSFER: '🏦', BANK_TRANSFER: '🏦' };
+    const icons: Record<string, string> = { CARD: '💳', PAYPAL: '💰', BANK_TRANSFER: '🏦' };
     const labels: Record<string, string> = { CARD: 'Carte', PAYPAL: 'PayPal', BANK_TRANSFER: 'Virement' };
     if (!method) return '';
     return `${icons[method] ?? ''} ${labels[method] ?? method}`;
