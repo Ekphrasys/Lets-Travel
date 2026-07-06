@@ -61,9 +61,12 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public PaymentResponse getById(@PathVariable UUID id) {
-        return paymentService.getById(id);
+    public PaymentResponse getById(@PathVariable UUID id, org.springframework.security.core.Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return paymentService.getById(id, callerId, isAdmin);
     }
 
     @PutMapping("/{id}")

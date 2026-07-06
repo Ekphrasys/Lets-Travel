@@ -107,6 +107,19 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
+    public BookingResponse findById(UUID bookingId, UUID callerId, boolean isAdmin) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Réservation introuvable"));
+
+        boolean isManager = booking.getTrip().getManagerId() != null
+                && booking.getTrip().getManagerId().equals(callerId);
+        if (!isAdmin && !isManager && !booking.getUserId().equals(callerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        return toResponse(booking, null);
+    }
+
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByUser(UUID userId) {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(b -> toResponse(b, null))

@@ -126,10 +126,13 @@ public class PaymentService {
                 .toList();
     }
 
-    public PaymentResponse getById(UUID paymentId) {
-        return paymentRepository.findById(paymentId)
-                .map(this::toResponse)
+    public PaymentResponse getById(UUID paymentId, UUID callerId, boolean isAdmin) {
+        Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
+        if (!isAdmin && !payment.getUserId().equals(callerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        return toResponse(payment);
     }
 
     @Transactional

@@ -97,13 +97,33 @@ CREATE TABLE payment.payments (
     booking_id     UUID NOT NULL,
     user_id        UUID NOT NULL,
     amount         DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-    status         VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
-    payment_method VARCHAR(50) NOT NULL DEFAULT 'CARD',
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+    status                  VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
+    payment_method          VARCHAR(50) NOT NULL DEFAULT 'CARD',
+    provider_transaction_id VARCHAR(255),
+    provider_status         VARCHAR(50),
+    failed_reason           VARCHAR(255),
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_payments_booking_id ON payment.payments(booking_id);
 CREATE INDEX idx_payments_user_id ON payment.payments(user_id);
+
+-- payment.payment_events
+CREATE TABLE payment.payment_events (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payment_id              UUID NOT NULL REFERENCES payment.payments(id) ON DELETE CASCADE,
+    status                  VARCHAR(20) NOT NULL,
+    provider_transaction_id VARCHAR(255),
+    reason                  VARCHAR(255),
+    provider_type           VARCHAR(20),
+    http_status             INT,
+    payload                 TEXT,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_payment_events_payment ON payment.payment_events(payment_id);
+CREATE INDEX idx_payment_events_status ON payment.payment_events(status);
+CREATE INDEX idx_payment_events_created ON payment.payment_events(created_at);
 
 CREATE TABLE IF NOT EXISTS "user".user_consents (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

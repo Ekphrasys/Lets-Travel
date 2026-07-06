@@ -1,8 +1,5 @@
 package com.travel.user.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
 import java.time.Instant;
 import java.util.UUID;
 

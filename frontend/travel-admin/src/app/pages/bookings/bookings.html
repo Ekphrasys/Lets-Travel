@@ -27,7 +27,6 @@
               @if (payment) {
                 <div>
                   <span class="payment-method">{{ paymentMethodLabel(payment.paymentMethod) }}</span>
-                  <span class="payment-status" [class]="payment.status.toLowerCase()">{{ payment.status }}</span>
                 </div>
                 @if (payment.failedReason) {
                   <small class="failed-reason">{{ payment.failedReason }}</small>

@@ -2,8 +2,6 @@ package com.travel.payment.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -28,7 +26,6 @@ public class Payment {
     private BigDecimal amount;
 
     @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private String status;
 
     @Column(name = "payment_method", nullable = false, length = 20)

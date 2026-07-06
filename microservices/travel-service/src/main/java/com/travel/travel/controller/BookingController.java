@@ -45,6 +45,15 @@ public class BookingController {
         return bookingService.findByTrip(tripId, callerId, isAdmin);
     }
 
+    @GetMapping("/{id}")
+    public BookingResponse getById(@PathVariable UUID id, Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return bookingService.findById(id, callerId, isAdmin);
+    }
+
     @PostMapping("/{id}/confirm-payment")
     public BookingResponse confirmPayment(
             @PathVariable UUID id,
