@@ -61,18 +61,21 @@ public class FeedbackService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public List<FeedbackResponse> findAll() {
         return feedbackRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<FeedbackResponse> findByUser(UUID userId) {
         return feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<FeedbackResponse> findByTrip(UUID tripId, UUID callerId, boolean isAdmin) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Voyage introuvable"));
@@ -85,6 +88,7 @@ public class FeedbackService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<FeedbackResponse> findByManager(UUID managerId) {
         List<UUID> tripIds = tripRepository.findByManagerId(managerId).stream()
                 .map(Trip::getId)

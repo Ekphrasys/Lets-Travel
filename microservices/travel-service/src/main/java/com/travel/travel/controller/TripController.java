@@ -8,8 +8,8 @@ import com.travel.travel.repository.BookingRepository;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.search.TripSearchService;
 import com.travel.travel.service.BookingService;
-import com.travel.travel.service.Neo4jRecommendationService;
 import com.travel.travel.service.RouteSearchService;
+import com.travel.travel.service.TripGraphService;
 import com.travel.travel.service.TripService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,7 +30,7 @@ public class TripController {
     private final TripService tripService;
     private final RouteSearchService routeSearchService;
     private final TripSearchService tripSearchService;
-    private final Neo4jRecommendationService neo4jRecommendationService;
+    private final TripGraphService tripGraphService;
     private final BookingRepository bookingRepository;
     private final FeedbackRepository feedbackRepository;
     private final UserServiceClient userServiceClient;
@@ -38,7 +38,7 @@ public class TripController {
 
     public TripController(TripService tripService, RouteSearchService routeSearchService,
                           TripSearchService tripSearchService,
-                          Neo4jRecommendationService neo4jRecommendationService,
+                          TripGraphService tripGraphService,
                           BookingRepository bookingRepository,
                           FeedbackRepository feedbackRepository,
                           UserServiceClient userServiceClient,
@@ -46,7 +46,7 @@ public class TripController {
         this.tripService = tripService;
         this.routeSearchService = routeSearchService;
         this.tripSearchService = tripSearchService;
-        this.neo4jRecommendationService = neo4jRecommendationService;
+        this.tripGraphService = tripGraphService;
         this.bookingRepository = bookingRepository;
         this.feedbackRepository = feedbackRepository;
         this.userServiceClient = userServiceClient;
@@ -107,16 +107,20 @@ public class TripController {
     @GetMapping("/recommendations")
     public List<TripResponse> recommendations(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        List<UUID> ids = neo4jRecommendationService.getRecommendations(userId);
-        if (ids.isEmpty()) {
+        List<String> suggestedIds = tripGraphService.getSuggestedTripIds(userId);
+        if (suggestedIds.isEmpty()) {
             return Collections.emptyList();
         }
         Set<UUID> alreadyBooked = bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .filter(b -> "CONFIRMED".equals(b.getStatus()) || "PENDING".equals(b.getStatus()))
                 .map(b -> b.getTrip().getId())
                 .collect(java.util.stream.Collectors.toSet());
-        return tripService.findAll().stream()
-                .filter(t -> ids.contains(t.id()) && !alreadyBooked.contains(t.id()))
+        Map<UUID, TripResponse> byId = tripService.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(TripResponse::id, t -> t));
+        return suggestedIds.stream()
+                .map(id -> byId.get(UUID.fromString(id)))
+                .filter(Objects::nonNull)
+                .filter(t -> !alreadyBooked.contains(t.id()))
                 .toList();
     }
 
@@ -174,7 +178,7 @@ public class TripController {
         feedback.setComment(request.comment());
         feedbackRepository.save(feedback);
 
-        neo4jRecommendationService.syncFeedback(userId, id, request.rating());
+        tripGraphService.recordFeedback(userId, id, request.rating());
 
         UserServiceClient.UserProfile profile = userServiceClient.getById(userId);
         return new FeedbackResponse(

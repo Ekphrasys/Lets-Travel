@@ -40,9 +40,6 @@ class BookingServiceTest {
     private PaymentServiceClient paymentServiceClient;
 
     @Mock
-    private Neo4jRecommendationService neo4jRecommendationService;
-
-    @Mock
     private TripGraphService tripGraphService;
 
     @InjectMocks

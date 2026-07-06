@@ -23,20 +23,17 @@ public class BookingService {
     private final TripService tripService;
     private final PaymentServiceClient paymentServiceClient;
     private final TripGraphService tripGraphService;
-    private final Neo4jRecommendationService neo4jRecommendationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             TripService tripService,
             PaymentServiceClient paymentServiceClient,
-            TripGraphService tripGraphService,
-            Neo4jRecommendationService neo4jRecommendationService
+            TripGraphService tripGraphService
     ) {
         this.bookingRepository = bookingRepository;
         this.tripService = tripService;
         this.paymentServiceClient = paymentServiceClient;
         this.tripGraphService = tripGraphService;
-        this.neo4jRecommendationService = neo4jRecommendationService;
     }
 
     @Transactional
@@ -103,7 +100,7 @@ public class BookingService {
         booking.setPaymentId(paymentId);
         trip.setSeatsAvailable(trip.getSeatsAvailable() - 1);
         tripService.saveTrip(trip);
-        neo4jRecommendationService.syncBooking(booking.getUserId(), trip.getId(), false);
+        tripGraphService.recordBooking(booking.getUserId(), trip.getId(), false);
     }
 
     @Transactional(readOnly = true)
@@ -165,7 +162,7 @@ public class BookingService {
         }
 
         booking.setStatus("CANCELLED");
-        neo4jRecommendationService.syncBooking(booking.getUserId(), booking.getTrip().getId(), true);
+        tripGraphService.recordBooking(booking.getUserId(), booking.getTrip().getId(), true);
         return toResponse(bookingRepository.save(booking), null);
     }
 
