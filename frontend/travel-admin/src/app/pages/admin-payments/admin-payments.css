@@ -3,3 +3,39 @@
 .status.completed { background: #c6f6d5; color: #276749; }
 .status.failed { background: #fed7d7; color: #c53030; }
 .status.refunded { background: #e9d8fd; color: #553c9a; }
+.status.processing { background: #feebc8; color: #744210; }
+.status.pending { background: #bee3f8; color: #2a4365; }
+.status.declined { background: #fed7d7; color: #c53030; }
+.status.approved { background: #c6f6d5; color: #276749; }
+.status.captured { background: #c6f6d5; color: #276749; }
+
+.failed-reason {
+  display: block;
+  color: #c53030;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.payment-method {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  background: #edf2f7;
+  color: #2d3748;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+
+.payment-status {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+.processing,
+.payment-loading {
+  color: #dd6b20;
+  font-size: 0.85rem;
+}

@@ -3,6 +3,7 @@ import { authGuard, guestGuard, adminGuard, managerOrAdminGuard } from './core/g
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
 import { DashboardComponent } from './pages/dashboard/dashboard';
+import { PrivacyComponent } from './pages/privacy/privacy';
 import { TripsComponent } from './pages/trips/trips';
 import { TripFormComponent } from './pages/trip-form/trip-form';
 import { BookingsComponent } from './pages/bookings/bookings';
@@ -22,9 +23,10 @@ import { ManagerAnalyticsComponent } from './pages/manager-analytics/manager-ana
 import { ManagerProfileComponent } from './pages/manager-profile/manager-profile';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
+   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
   { path: '', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'privacy', component: PrivacyComponent, canActivate: [authGuard] },
   { path: 'trips', component: TripsComponent, canActivate: [authGuard] },
   { path: 'trips/new', component: TripFormComponent, canActivate: [managerOrAdminGuard] },
   { path: 'trips/:id/edit', component: TripFormComponent, canActivate: [managerOrAdminGuard] },

@@ -11,6 +11,8 @@ public record PaymentResponse(
         BigDecimal amount,
         String status,
         String paymentMethod,
+        String providerTransactionId,
+        String providerStatus,
+        String failedReason,
         Instant createdAt
-) {
-}
+) {}

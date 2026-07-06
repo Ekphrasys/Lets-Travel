@@ -120,7 +120,6 @@ export class TripsComponent implements OnInit, OnDestroy {
     this.bookingService.book(trip.id, this.selectedPaymentMethod()).subscribe({
       next: (booking) => {
         this.pendingBookingId.set(booking.id);
-        this.pendingClientSecret.set(booking.clientSecret ?? null);
         this.paymentStep.set(2);
       },
       error: () => {
@@ -132,18 +131,22 @@ export class TripsComponent implements OnInit, OnDestroy {
 
   confirmPayment(): void {
     const bookingId = this.pendingBookingId();
-    const clientSecret = this.pendingClientSecret();
-    if (!bookingId || !clientSecret || this.isConfirming()) return;
+    if (!bookingId || this.isConfirming()) return;
     this.isConfirming.set(true);
-    this.bookingService.confirmPayment(bookingId, clientSecret).subscribe({
-      next: () => {
-        this.closePaymentModal();
-        this.message.set('Paiement réussi ! Votre réservation est confirmée.');
-        this.load();
+    this.bookingService.refreshBooking(bookingId).subscribe({
+      next: (booking) => {
+        this.isConfirming.set(false);
+        if (booking.status === 'CONFIRMED' || booking.status === 'PENDING') {
+          this.closePaymentModal();
+          this.message.set('Réservation confirmée !');
+          this.load();
+        } else {
+          this.message.set('Paiement refusé. Veuillez réessayer.');
+        }
       },
       error: () => {
         this.isConfirming.set(false);
-        this.message.set('Paiement refusé. Veuillez réessayer.');
+        this.message.set('Impossible de vérifier le paiement.');
       }
     });
   }

@@ -1,64 +1,42 @@
 package com.travel.payment.service;
 
 import com.travel.payment.dto.CreatePaymentRequest;
-import com.travel.payment.dto.PaymentIntentResponse;
 import com.travel.payment.dto.PaymentResponse;
 import com.travel.payment.dto.UpdatePaymentRequest;
 import com.travel.payment.model.Payment;
+import com.travel.payment.model.PaymentEvent;
+import com.travel.payment.provider.CreditCardProvider;
+import com.travel.payment.provider.PayPalProvider;
+import com.travel.payment.provider.PaymentProvider;
+import com.travel.payment.repository.PaymentEventRepository;
 import com.travel.payment.repository.PaymentRepository;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Primary
 public class PaymentService {
 
+    private static final Map<String, PaymentProvider> PROVIDERS = Map.of(
+            PaymentProvider.TYPE_CARD, new CreditCardProvider(),
+            PaymentProvider.TYPE_PAYPAL, new PayPalProvider()
+    );
+
     private final PaymentRepository paymentRepository;
+    private final PaymentEventRepository paymentEventRepository;
 
-    public PaymentService(PaymentRepository paymentRepository) {
+    public PaymentService(PaymentRepository paymentRepository, PaymentEventRepository paymentEventRepository) {
         this.paymentRepository = paymentRepository;
-    }
-
-    @Transactional
-    public PaymentIntentResponse createIntent(CreatePaymentRequest request) {
-        Payment payment = new Payment();
-        UUID paymentId = UUID.randomUUID();
-        payment.setId(paymentId);
-        payment.setBookingId(request.bookingId());
-        payment.setUserId(request.userId());
-        payment.setAmount(request.amount());
-        payment.setStatus("REQUIRES_PAYMENT");
-        if (request.paymentMethod() != null) {
-            payment.setPaymentMethod(request.paymentMethod());
-        }
-        paymentRepository.save(payment);
-        String clientSecret = "pi_mock_" + paymentId;
-        return new PaymentIntentResponse(paymentId, clientSecret, request.amount(), "EUR", "REQUIRES_PAYMENT");
-    }
-
-    @Transactional
-    public PaymentResponse confirmIntent(UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
-        if (!"REQUIRES_PAYMENT".equals(payment.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Intention de paiement déjà traitée");
-        }
-        payment.setStatus("COMPLETED");
-        return toResponse(paymentRepository.save(payment));
-    }
-
-    @Transactional
-    public void cancelIntent(UUID paymentId) {
-        paymentRepository.findById(paymentId).ifPresent(p -> {
-            if ("REQUIRES_PAYMENT".equals(p.getStatus())) {
-                p.setStatus("CANCELLED");
-                paymentRepository.save(p);
-            }
-        });
+        this.paymentEventRepository = paymentEventRepository;
     }
 
     @Transactional
@@ -68,9 +46,72 @@ public class PaymentService {
         payment.setBookingId(request.bookingId());
         payment.setUserId(request.userId());
         payment.setAmount(request.amount());
-        payment.setStatus("COMPLETED");
-        if (request.paymentMethod() != null) {
-            payment.setPaymentMethod(request.paymentMethod());
+        payment.setPaymentMethod(request.paymentMethod());
+        payment.setStatus("PROCESSING");
+        paymentRepository.save(payment);
+
+        recordEvent(payment.getId(), PaymentEvent.EventType.CREATED, null, null, null, null);
+
+        PaymentProvider provider = PROVIDERS.getOrDefault(request.paymentMethod(), PROVIDERS.get(PaymentProvider.TYPE_CARD));
+        PaymentProvider.PaymentContext context = new PaymentProvider.PaymentContext(
+                request.bookingId().toString(), request.userId().toString(), request.amount()
+        );
+
+        PaymentProvider.PaymentResult result = provider.process(context);
+
+        payment.setProviderTransactionId(result.providerTransactionId());
+        payment.setProviderStatus(result.providerStatus());
+
+        if (result.success()) {
+            payment.setStatus("COMPLETED");
+            recordEvent(payment.getId(), PaymentEvent.EventType.COMPLETED, result.providerTransactionId(),
+                    provider.getClass().getSimpleName(), 200, result.providerStatus());
+        } else {
+            payment.setStatus("FAILED");
+            payment.setFailedReason(result.failedReason());
+            recordEvent(payment.getId(), PaymentEvent.EventType.FAILED, result.providerTransactionId(),
+                    provider.getClass().getSimpleName(), 402, result.failedReason());
+        }
+
+        return toResponse(paymentRepository.save(payment));
+    }
+
+    @Transactional
+    public PaymentResponse capture(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
+        if (!"PENDING".equals(payment.getStatus())) {
+            return toResponse(payment);
+        }
+        PaymentProvider provider = PROVIDERS.getOrDefault(payment.getPaymentMethod(), PROVIDERS.get(PaymentProvider.TYPE_CARD));
+        PaymentProvider.PaymentResult result = provider.capture(payment.getProviderTransactionId(), payment.getAmount());
+        if (result.success()) {
+            payment.setStatus("COMPLETED");
+            payment.setProviderStatus(result.providerStatus());
+            recordEvent(payment.getId(), PaymentEvent.EventType.COMPLETED, result.providerTransactionId(),
+                    provider.getClass().getSimpleName(), 200, result.providerStatus());
+        }
+        return toResponse(paymentRepository.save(payment));
+    }
+
+    @Transactional
+    public PaymentResponse refund(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
+        if (!"COMPLETED".equals(payment.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Paiement non remboursable");
+        }
+        PaymentProvider provider = PROVIDERS.getOrDefault(payment.getPaymentMethod(), PROVIDERS.get(PaymentProvider.TYPE_CARD));
+        PaymentProvider.PaymentResult result = provider.refund(payment.getProviderTransactionId(), payment.getAmount());
+        if (result.success()) {
+            payment.setStatus("REFUNDED");
+            payment.setProviderStatus(result.providerStatus());
+            recordEvent(payment.getId(), PaymentEvent.EventType.REFUNDED, result.providerTransactionId(),
+                    provider.getClass().getSimpleName(), 200, "Refund accepted");
+        } else {
+            payment.setFailedReason(result.failedReason());
+            recordEvent(payment.getId(), PaymentEvent.EventType.FAILED, result.providerTransactionId(),
+                    provider.getClass().getSimpleName(), 402, result.failedReason());
         }
         return toResponse(paymentRepository.save(payment));
     }
@@ -85,18 +126,25 @@ public class PaymentService {
                 .toList();
     }
 
-    public PaymentResponse getById(UUID paymentId) {
-        return paymentRepository.findById(paymentId)
-                .map(this::toResponse)
+    public PaymentResponse getById(UUID paymentId, UUID callerId, boolean isAdmin) {
+        Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
+        if (!isAdmin && !payment.getUserId().equals(callerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+        return toResponse(payment);
     }
 
     @Transactional
     public PaymentResponse update(UUID paymentId, UpdatePaymentRequest request) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
-        payment.setAmount(request.amount());
-        payment.setStatus(request.status());
+        if (request.amount() != null) {
+            payment.setAmount(request.amount());
+        }
+        if (request.status() != null) {
+            payment.setStatus(request.status());
+        }
         return toResponse(paymentRepository.save(payment));
     }
 
@@ -108,15 +156,17 @@ public class PaymentService {
         paymentRepository.deleteById(paymentId);
     }
 
-    @Transactional
-    public PaymentResponse refund(UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paiement introuvable"));
-        if (!"COMPLETED".equals(payment.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Paiement non remboursable");
-        }
-        payment.setStatus("REFUNDED");
-        return toResponse(paymentRepository.save(payment));
+    private void recordEvent(UUID paymentId, PaymentEvent.EventType status, String providerTxnId,
+                             String providerType, Integer httpStatus, String payload) {
+        PaymentEvent event = new PaymentEvent();
+        event.setId(UUID.randomUUID());
+        event.setPaymentId(paymentId);
+        event.setStatus(status);
+        event.setProviderTransactionId(providerTxnId);
+        event.setProviderType(providerType);
+        event.setHttpStatus(httpStatus);
+        event.setPayload(payload);
+        paymentEventRepository.save(event);
     }
 
     private PaymentResponse toResponse(Payment payment) {
@@ -127,6 +177,9 @@ public class PaymentService {
                 payment.getAmount(),
                 payment.getStatus(),
                 payment.getPaymentMethod(),
+                payment.getProviderTransactionId(),
+                payment.getProviderStatus(),
+                payment.getFailedReason(),
                 payment.getCreatedAt()
         );
     }

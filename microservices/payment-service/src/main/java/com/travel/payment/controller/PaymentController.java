@@ -1,14 +1,12 @@
 package com.travel.payment.controller;
 
 import com.travel.payment.dto.CreatePaymentRequest;
-import com.travel.payment.dto.PaymentIntentResponse;
 import com.travel.payment.dto.PaymentResponse;
 import com.travel.payment.dto.UpdatePaymentRequest;
 import com.travel.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,29 +23,9 @@ public class PaymentController {
     }
 
     @GetMapping("/me")
-    public List<PaymentResponse> myPayments(Authentication authentication) {
+    public List<PaymentResponse> myPayments(org.springframework.security.core.Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
         return paymentService.findByUser(userId);
-    }
-
-    @PostMapping("/internal/intent")
-    @PreAuthorize("hasRole('INTERNAL')")
-    @ResponseStatus(HttpStatus.CREATED)
-    public PaymentIntentResponse createIntent(@Valid @RequestBody CreatePaymentRequest request) {
-        return paymentService.createIntent(request);
-    }
-
-    @PostMapping("/internal/{id}/confirm")
-    @PreAuthorize("hasRole('INTERNAL')")
-    public PaymentResponse confirmIntent(@PathVariable UUID id) {
-        return paymentService.confirmIntent(id);
-    }
-
-    @PostMapping("/internal/{id}/cancel")
-    @PreAuthorize("hasRole('INTERNAL')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelIntent(@PathVariable UUID id) {
-        paymentService.cancelIntent(id);
     }
 
     @PostMapping("/internal")
@@ -55,6 +33,12 @@ public class PaymentController {
     @ResponseStatus(HttpStatus.CREATED)
     public PaymentResponse createInternal(@Valid @RequestBody CreatePaymentRequest request) {
         return paymentService.createPayment(request);
+    }
+
+    @PostMapping("/internal/{id}/capture")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public PaymentResponse captureInternal(@PathVariable UUID id) {
+        return paymentService.capture(id);
     }
 
     @PostMapping("/internal/{id}/refund")
@@ -77,9 +61,12 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public PaymentResponse getById(@PathVariable UUID id) {
-        return paymentService.getById(id);
+    public PaymentResponse getById(@PathVariable UUID id, org.springframework.security.core.Authentication authentication) {
+        UUID callerId = UUID.fromString(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return paymentService.getById(id, callerId, isAdmin);
     }
 
     @PutMapping("/{id}")

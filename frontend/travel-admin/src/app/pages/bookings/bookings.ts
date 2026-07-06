@@ -1,25 +1,27 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../services/booking.service';
 import { FeedbackService } from '../../services/feedback.service';
-import { PaymentService } from '../../services/payment.service';
+import { AdminService } from '../../services/admin.service';
 import { Booking, Payment } from '../../models/travel.models';
 
 @Component({
   selector: 'app-bookings',
-  imports: [DatePipe, FormsModule],
+  imports: [CommonModule, DatePipe, FormsModule],
   templateUrl: './bookings.html',
   styleUrl: './bookings.css'
 })
 export class BookingsComponent implements OnInit {
   private bookingService = inject(BookingService);
   private feedbackService = inject(FeedbackService);
-  private paymentService = inject(PaymentService);
+  private adminService = inject(AdminService);
 
   bookings = signal<Booking[]>([]);
+  payments = signal<Map<string, Payment>>(new Map());
   message = signal('');
-  private paymentsByBookingId = signal<Map<string, Payment>>(new Map());
+  loadingPayments = signal(false);
 
   activeFeedbackBookingId = signal<string | null>(null);
   feedbackRating = signal(0);
@@ -33,16 +35,24 @@ export class BookingsComponent implements OnInit {
   }
 
   load(): void {
-    this.bookingService.myBookings().subscribe(b => this.bookings.set(b));
-    this.paymentService.myPayments().subscribe(payments => {
-      const map = new Map<string, Payment>();
-      payments.forEach(p => map.set(p.bookingId, p));
-      this.paymentsByBookingId.set(map);
+    this.loadingPayments.set(true);
+    this.bookingService.myBookings().subscribe((b: Booking[]) => {
+      this.bookings.set(b);
+      const promises: Promise<void>[] = [];
+      b.forEach(booking => {
+        if (booking.paymentId) {
+          promises.push(this.adminService.getPayment(booking.paymentId).toPromise().then(
+            (p) => p ? this.payments.update(m => new Map(m).set(booking.id, p)) : Promise.resolve(),
+            () => Promise.resolve()
+          ));
+        }
+      });
+      Promise.all(promises).finally(() => this.loadingPayments.set(false));
     });
   }
 
-  getPayment(bookingId: string): Payment | undefined {
-    return this.paymentsByBookingId().get(bookingId);
+  paymentFor(bookingId: string): Payment | null {
+    return this.payments().get(bookingId) || null;
   }
 
   paymentMethodLabel(method: string | undefined): string {
@@ -52,8 +62,16 @@ export class BookingsComponent implements OnInit {
     return `${icons[method] ?? ''} ${labels[method] ?? method}`;
   }
 
+  canCancel(booking: Booking): boolean {
+    if (!booking.tripDepartureDate) return true;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + 3);
+    return new Date(booking.tripDepartureDate) > cutoff;
+  }
+
   cancel(id: string): void {
     if (!confirm('Annuler cette réservation ?')) return;
+    this.message.set('');
     this.bookingService.cancel(id).subscribe({
       next: () => {
         this.message.set('Réservation annulée.');
@@ -86,15 +104,8 @@ export class BookingsComponent implements OnInit {
         this.activeFeedbackBookingId.set(null);
         this.message.set('Merci pour votre avis !');
       },
-      error: () => this.message.set('Impossible d\'envoyer l\'avis.')
+      error: () => this.message.set("Impossible d'envoyer l'avis.")
     });
-  }
-
-  canCancel(booking: Booking): boolean {
-    if (!booking.tripDepartureDate) return true;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() + 3);
-    return new Date(booking.tripDepartureDate) > cutoff;
   }
 
   hasSubmitted(bookingId: string): boolean {

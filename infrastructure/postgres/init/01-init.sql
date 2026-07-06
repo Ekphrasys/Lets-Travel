@@ -97,13 +97,68 @@ CREATE TABLE payment.payments (
     booking_id     UUID NOT NULL,
     user_id        UUID NOT NULL,
     amount         DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-    status         VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
-    payment_method VARCHAR(50) NOT NULL DEFAULT 'CARD',
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+    status                  VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
+    payment_method          VARCHAR(50) NOT NULL DEFAULT 'CARD',
+    provider_transaction_id VARCHAR(255),
+    provider_status         VARCHAR(50),
+    failed_reason           VARCHAR(255),
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_payments_booking_id ON payment.payments(booking_id);
 CREATE INDEX idx_payments_user_id ON payment.payments(user_id);
+
+-- payment.payment_events
+CREATE TABLE payment.payment_events (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payment_id              UUID NOT NULL REFERENCES payment.payments(id) ON DELETE CASCADE,
+    status                  VARCHAR(20) NOT NULL,
+    provider_transaction_id VARCHAR(255),
+    reason                  VARCHAR(255),
+    provider_type           VARCHAR(20),
+    http_status             INT,
+    payload                 TEXT,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_payment_events_payment ON payment.payment_events(payment_id);
+CREATE INDEX idx_payment_events_status ON payment.payment_events(status);
+CREATE INDEX idx_payment_events_created ON payment.payment_events(created_at);
+
+CREATE TABLE IF NOT EXISTS "user".user_consents (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       UUID NOT NULL,
+    consent_type  VARCHAR(50) NOT NULL,
+    version       VARCHAR(20) NOT NULL,
+    accepted_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ip_address    VARCHAR(45),
+    user_agent    VARCHAR(255)
+);
+
+CREATE INDEX idx_user_consents_user ON "user".user_consents(user_id);
+CREATE INDEX idx_user_consents_type ON "user".user_consents(consent_type);
+
+CREATE TABLE IF NOT EXISTS "user".audit_logs (
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    principal_user_id UUID,
+    action            VARCHAR(100) NOT NULL,
+    target_id         VARCHAR(100),
+    status            VARCHAR(20) NOT NULL,
+    ip_address        VARCHAR(45),
+    user_agent        VARCHAR(255),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_audit_logs_user ON "user".audit_logs(principal_user_id);
+CREATE INDEX idx_audit_logs_action ON "user".audit_logs(action);
+CREATE INDEX idx_audit_logs_created ON "user".audit_logs(created_at);
+
+-- GDPR: démo consents
+INSERT INTO "user".user_consents (id, user_id, consent_type, version, ip_address, user_agent)
+VALUES
+    ('f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'GDPR', '1.0', '127.0.0.1', 'DemoAgent/1.0'),
+    ('e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', 'd4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'GDPR', '1.0', '127.0.0.1', 'DemoAgent/1.0')
+ON CONFLICT DO NOTHING;
 
 -- Données de démo (BCrypt hash pour 'password123' : $2a$10$g6x9/Vsk8t5sC3uH8431eOnK24o82Wz/7l1c.3.d8vH0K5cuxQv4y)
 

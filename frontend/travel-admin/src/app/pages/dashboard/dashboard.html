@@ -103,9 +103,12 @@
                 <p class="price">{{ t.price }} €</p>
                 <p class="seats">{{ t.seatsAvailable }} places restantes</p>
                 <div class="booking-actions">
-                  <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary">💳 Carte</button>
-                  <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success">🅿️ PayPal</button>
-                  <button (click)="bookTrip(t, 'BANK_TRANSFER')" class="btn btn-sm btn-secondary">🏦 Virement</button>
+                  <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary" [disabled]="loading()">💳 Carte</button>
+                  <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success" [disabled]="loading()">🅿️ PayPal</button>
+                  <button (click)="bookTrip(t, 'BANK_TRANSFER')" class="btn btn-sm btn-secondary" [disabled]="loading()">🏦 Virement</button>
+                  @if (loading()) {
+                    <span class="processing">Traitement en cours...</span>
+                  }
                 </div>
               </div>
             }
@@ -127,8 +130,8 @@
             <p>Le {{ t.departureDate | date:'dd/MM/yyyy' }}</p>
             <p class="price">{{ t.price }} €</p>
             <div class="booking-actions">
-              <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary">💳 Carte</button>
-              <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success">Paypal</button>
+              <button (click)="bookTrip(t, 'CARD')" class="btn btn-sm btn-primary" [disabled]="loading()">💳 Carte</button>
+              <button (click)="bookTrip(t, 'PAYPAL')" class="btn btn-sm btn-success" [disabled]="loading()">Paypal</button>
             </div>
           </div>
         } @empty {

@@ -9,9 +9,11 @@
       <thead>
         <tr>
           <th>ID</th>
+          <th>Méthode</th>
           <th>Booking</th>
           <th>Montant</th>
           <th>Statut</th>
+          <th>Txn Provider</th>
           <th>Date</th>
           <th></th>
         </tr>
@@ -20,9 +22,22 @@
         @for (p of payments(); track p.id) {
           <tr>
             <td>{{ p.id | slice:0:8 }}…</td>
+            <td>{{ p.paymentMethod }}</td>
             <td>{{ p.bookingId | slice:0:8 }}…</td>
             <td>{{ p.amount | currency:'EUR' }}</td>
-            <td><span class="status" [class]="p.status.toLowerCase()">{{ p.status }}</span></td>
+            <td>
+              <span class="status" [class]="p.status.toLowerCase()">{{ p.status }}</span>
+              @if (p.failedReason) {
+                <small class="failed-reason">{{ p.failedReason }}</small>
+              }
+            </td>
+            <td>
+              @if (p.providerTransactionId) {
+                <small>{{ p.providerTransactionId | slice:0:16 }}…</small>
+              } @else {
+                -
+              }
+            </td>
             <td>{{ p.createdAt | date:'short' }}</td>
             <td class="actions">
               <a [routerLink]="['/admin/payments', p.id, 'edit']">Modifier</a>
@@ -30,10 +45,9 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="6">Aucun paiement.</td></tr>
+          <tr><td colspan="8">Aucun paiement.</td></tr>
         }
       </tbody>
     </table>
   </div>
 </div>
-

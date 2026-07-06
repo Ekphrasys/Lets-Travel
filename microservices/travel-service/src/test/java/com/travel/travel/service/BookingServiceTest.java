@@ -49,7 +49,7 @@ class BookingServiceTest {
     private BookingService bookingService;
 
     @Test
-    void createBooking_createsPendingBookingWithIntent() {
+    void createBooking_processing_createsPendingBooking() {
         UUID userId = UUID.randomUUID();
         UUID tripId = UUID.randomUUID();
         UUID paymentId = UUID.randomUUID();
@@ -57,17 +57,54 @@ class BookingServiceTest {
 
         when(tripService.getTripEntity(tripId)).thenReturn(trip);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(paymentServiceClient.createIntent(any(), any(), any(), any()))
-                .thenReturn(new PaymentServiceClient.IntentResult(
-                        paymentId, "pi_mock_" + paymentId, new BigDecimal("50.00"), "EUR", "REQUIRES_PAYMENT_METHOD"));
+        when(paymentServiceClient.createPayment(any(), any(), any(), any()))
+                .thenReturn(paymentResult(paymentId, "PROCESSING", null));
 
         var response = bookingService.createBooking(userId, new CreateBookingRequest(tripId, "CARD"));
 
         assertThat(response.status()).isEqualTo("PENDING");
         assertThat(response.paymentId()).isEqualTo(paymentId);
-        assertThat(response.clientSecret()).isEqualTo("pi_mock_" + paymentId);
+        assertThat(response.clientSecret()).isNull();
         verify(tripService, never()).saveTrip(any());
         assertThat(trip.getSeatsAvailable()).isEqualTo(5);
+    }
+
+    @Test
+    void createBooking_completed_confirmsImmediately() {
+        UUID userId = UUID.randomUUID();
+        UUID tripId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        Trip trip = activeTrip(tripId, 5, new BigDecimal("50.00"));
+
+        when(tripService.getTripEntity(tripId)).thenReturn(trip);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(paymentServiceClient.createPayment(any(), any(), any(), any()))
+                .thenReturn(paymentResult(paymentId, "COMPLETED", null));
+
+        var response = bookingService.createBooking(userId, new CreateBookingRequest(tripId, "CARD"));
+
+        assertThat(response.status()).isEqualTo("CONFIRMED");
+        assertThat(response.paymentId()).isEqualTo(paymentId);
+        verify(tripService).saveTrip(trip);
+        assertThat(trip.getSeatsAvailable()).isEqualTo(4);
+    }
+
+    @Test
+    void createBooking_declined_cancelsBookingAndThrows() {
+        UUID userId = UUID.randomUUID();
+        UUID tripId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+        Trip trip = activeTrip(tripId, 5, new BigDecimal("50.00"));
+
+        when(tripService.getTripEntity(tripId)).thenReturn(trip);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(paymentServiceClient.createPayment(any(), any(), any(), any()))
+                .thenReturn(paymentResult(paymentId, "FAILED", "Carte refusée"));
+
+        assertThatThrownBy(() -> bookingService.createBooking(userId, new CreateBookingRequest(tripId, "CARD")))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Paiement refusé");
+        verify(tripService, never()).saveTrip(any());
     }
 
     @Test
@@ -82,55 +119,12 @@ class BookingServiceTest {
     }
 
     @Test
-    void confirmBookingPayment_completed_confirmsBooking() {
-        UUID bookingId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID paymentId = UUID.randomUUID();
-        Trip trip = activeTrip(UUID.randomUUID(), 5, new BigDecimal("50.00"));
-        Booking booking = booking(userId, "PENDING");
-        booking.setId(bookingId);
-        booking.setTrip(trip);
-        booking.setPaymentId(paymentId);
-
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(paymentServiceClient.confirmPayment(paymentId))
-                .thenReturn(new PaymentServiceClient.PaymentResult(
-                        paymentId, bookingId, userId, new BigDecimal("50.00"), "COMPLETED", Instant.now()));
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        var response = bookingService.confirmBookingPayment(
-                bookingId, new ConfirmBookingPaymentRequest("pi_mock_" + paymentId), userId
-        );
-
-        assertThat(response.status()).isEqualTo("CONFIRMED");
-        verify(tripService).saveTrip(trip);
-        assertThat(trip.getSeatsAvailable()).isEqualTo(4);
-    }
-
-    @Test
-    void confirmBookingPayment_failed_cancelsBooking() {
-        UUID bookingId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID paymentId = UUID.randomUUID();
-        Trip trip = activeTrip(UUID.randomUUID(), 5, new BigDecimal("50.00"));
-        Booking booking = booking(userId, "PENDING");
-        booking.setId(bookingId);
-        booking.setTrip(trip);
-        booking.setPaymentId(paymentId);
-
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(paymentServiceClient.confirmPayment(paymentId))
-                .thenReturn(new PaymentServiceClient.PaymentResult(
-                        paymentId, bookingId, userId, new BigDecimal("50.00"), "FAILED", Instant.now()));
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
-
+    void confirmBookingPayment_notSupportedInThisFlow() {
         assertThatThrownBy(() -> bookingService.confirmBookingPayment(
-                bookingId, new ConfirmBookingPaymentRequest("pi_mock_" + paymentId), userId
+                UUID.randomUUID(), new ConfirmBookingPaymentRequest("pi_mock_x"), UUID.randomUUID()
         ))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Paiement refusé");
-
-        assertThat(booking.getStatus()).isEqualTo("CANCELLED");
+                .hasMessageContaining("non supportée");
     }
 
     // @Test
@@ -202,6 +196,12 @@ class BookingServiceTest {
         bookingService.cancelBooking(bookingId, userId, false);
 
         verify(paymentServiceClient, never()).refund(any());
+    }
+
+    private static PaymentServiceClient.PaymentResult paymentResult(UUID paymentId, String status, String failedReason) {
+        return new PaymentServiceClient.PaymentResult(
+                paymentId, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("50.00"), status, Instant.now(),
+                "CARD", "txn_mock_" + paymentId, status, failedReason);
     }
 
     private static Trip activeTrip(UUID id, int seats, BigDecimal price) {
