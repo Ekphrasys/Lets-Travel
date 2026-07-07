@@ -166,7 +166,7 @@ public class UserService {
 
     public List<UserResponse> findManagers() {
         return userRepository.findAll().stream()
-                .filter(u -> "MANAGER".equalsIgnoreCase(u.getRole()))
+                .filter(u -> "TRAVEL_MANAGER".equalsIgnoreCase(u.getRole()))
                 .map(this::toResponse)
                 .toList();
     }

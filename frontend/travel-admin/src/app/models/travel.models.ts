@@ -1,7 +1,7 @@
 export interface AuthResponse {
   token: string;
   userId: string;
-  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'MANAGER' | 'TRAVELER';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'TRAVELER';
 }
 
 export interface Trip {

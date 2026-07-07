@@ -130,7 +130,7 @@ public class TripController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TRAVEL_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAVEL_MANAGER')")
     @ResponseStatus(HttpStatus.CREATED)
     public TripResponse create(@Valid @RequestBody CreateTripRequest request, Authentication authentication) {
         UUID managerId = UUID.fromString(authentication.getName());
@@ -138,7 +138,7 @@ public class TripController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TRAVEL_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAVEL_MANAGER')")
     public TripResponse update(@PathVariable UUID id, @Valid @RequestBody CreateTripRequest request, Authentication authentication) {
         UUID updaterId = UUID.fromString(authentication.getName());
         boolean isAdmin = isAdmin(authentication);
@@ -146,7 +146,7 @@ public class TripController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TRAVEL_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TRAVEL_MANAGER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id, Authentication authentication) {
         UUID updaterId = UUID.fromString(authentication.getName());
