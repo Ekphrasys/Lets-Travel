@@ -91,7 +91,7 @@ export class DashboardComponent implements OnInit {
   // --- Traveler Logic ---
   loadTravelerData(userId: string): void {
     this.bookingService.myBookings().subscribe((b: Booking[]) => this.bookings.set(b));
-    this.tripService.recommendations().subscribe((r: Trip[]) => this.recommendations.set(r));
+    this.tripService.recommendations().subscribe((r: Trip[]) => this.recommendations.set(r.slice(0, 3)));
     this.adminService.listManagers().subscribe((m: User[]) => this.managers.set(m));
     this.adminService.getReportCounts(userId).subscribe((c: { reportsFiled: number; reportsReceived: number }) => this.reportCounts.set(c));
     this.feedbackService.myFeedbacks().subscribe(feedbacks => {

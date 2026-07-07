@@ -107,23 +107,49 @@ public class TripGraphService {
                     MATCH (u:User {id: $userId})
                     OPTIONAL MATCH (u)-[p:PARTICIPATED_IN {cancelled: false}]->(participated:Trip)
                     WITH u,
-                         avg(toFloat(participated.price)) AS avgPrice,
+                         avg(toFloat(participated.price)) AS bookedAvgPrice,
                          collect(DISTINCT participated.destinationCity) AS visitedDestinations,
                          collect(DISTINCT participated.originCity) AS usedOrigins
-                    OPTIONAL MATCH (u)-[r:RATED]->(rated:Trip) WHERE r.rating >= 4
-                    WITH u, avgPrice, usedOrigins,
-                         visitedDestinations + [d IN collect(DISTINCT rated.destinationCity) WHERE NOT d IN visitedDestinations] AS preferredDestinations
+
+                    OPTIONAL MATCH (u)-[r:RATED]->(rated:Trip)
+                    WITH u, bookedAvgPrice, visitedDestinations, usedOrigins,
+                         collect({
+                           destination: rated.destinationCity,
+                           origin: rated.originCity,
+                           price: toFloat(rated.price),
+                           weight: toFloat(r.rating) - 3.0
+                         }) AS ratedSignals
+
+                    WITH u, visitedDestinations, usedOrigins, ratedSignals, bookedAvgPrice,
+                         [sig IN ratedSignals WHERE sig.weight > 0 | sig.price] AS likedPrices
+
+                    WITH u, visitedDestinations, usedOrigins, ratedSignals,
+                         CASE WHEN size(likedPrices) > 0
+                              THEN reduce(s = 0.0, p IN likedPrices | s + p) / size(likedPrices)
+                              ELSE bookedAvgPrice END AS refPrice
 
                     MATCH (candidate:Trip)
                     WHERE NOT (u)-[:PARTICIPATED_IN {cancelled: false}]->(candidate)
                       AND candidate.status = 'ACTIVE'
                       AND candidate.departureDate > $today
                     OPTIONAL MATCH (other:User)-[otherR:RATED]->(candidate)
-                    WITH candidate, avg(otherR.rating) AS avgOtherRating,
-                         CASE WHEN candidate.destinationCity IN preferredDestinations THEN 3 ELSE 0 END +
-                         CASE WHEN candidate.originCity IN usedOrigins THEN 2 ELSE 0 END +
-                         CASE WHEN avgPrice > 0 AND abs(toFloat(candidate.price) - avgPrice) < avgPrice * 0.3 THEN 2 ELSE 0 END +
-                         CASE WHEN avgPrice > 0 AND abs(toFloat(candidate.price) - avgPrice) < avgPrice * 0.5 THEN 1 ELSE 0 END AS score
+                    WITH candidate, visitedDestinations, usedOrigins, ratedSignals, refPrice,
+                         avg(otherR.rating) AS avgOtherRating
+
+                    WITH candidate, avgOtherRating,
+                         reduce(s = 0.0, sig IN ratedSignals |
+                           s + CASE WHEN sig.destination = candidate.destinationCity THEN sig.weight * 2.0 ELSE 0.0 END
+                             + CASE WHEN sig.origin = candidate.originCity THEN sig.weight * 1.0 ELSE 0.0 END
+                         ) AS ratingAffinity,
+                         (CASE WHEN candidate.destinationCity IN visitedDestinations THEN 1.0 ELSE 0.0 END +
+                          CASE WHEN candidate.originCity IN usedOrigins THEN 0.5 ELSE 0.0 END) AS bookingAffinity,
+                         (CASE WHEN refPrice IS NULL OR refPrice = 0 THEN 0.0
+                               WHEN abs(toFloat(candidate.price) - refPrice) / refPrice < 0.3 THEN 2.0
+                               WHEN abs(toFloat(candidate.price) - refPrice) / refPrice < 0.5 THEN 1.0
+                               ELSE 0.0 END) AS priceAffinity
+
+                    WITH candidate, avgOtherRating,
+                         ratingAffinity + bookingAffinity + priceAffinity + coalesce(avgOtherRating, 0.0) * 0.5 AS score
                     WHERE score > 0
                     RETURN candidate.id AS tripId
                     ORDER BY score DESC, coalesce(avgOtherRating, 0.0) DESC, candidate.departureDate ASC
