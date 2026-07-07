@@ -167,7 +167,9 @@
                       <td>
                         @if (b.status === 'CONFIRMED') {
                           <button (click)="cancelBooking(b)" class="btn btn-sm btn-danger">Annuler</button>
-                          <button (click)="openFeedbackModal(t)" class="btn btn-sm btn-primary ml-2">Laisser un avis</button>
+                          @if (!hasReviewed(t.id)) {
+                            <button (click)="openFeedbackModal(t)" class="btn btn-sm btn-primary ml-2">Laisser un avis</button>
+                          }
                         } @else {
                           -
                         }

@@ -168,6 +168,10 @@ public class TripController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous ne pouvez laisser un avis que sur un voyage réservé");
         }
 
+        if (feedbackRepository.existsByTripIdAndUserId(id, userId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Vous avez déjà laissé un avis pour ce voyage");
+        }
+
         Trip trip = tripService.getTripEntity(id);
 
         Feedback feedback = new Feedback();
