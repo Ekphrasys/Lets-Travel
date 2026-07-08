@@ -146,7 +146,7 @@ public class UserService {
 
         try {
             entityManager.createNativeQuery(
-                    "UPDATE user.reports SET reporter_id = NULL WHERE reporter_id = :userId"
+                    "UPDATE \"user\".reports SET reporter_id = NULL WHERE reporter_id = :userId"
             ).setParameter("userId", userId).executeUpdate();
         } catch (Exception e) {
         }
