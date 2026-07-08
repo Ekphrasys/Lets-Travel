@@ -330,7 +330,15 @@ public class TripController {
 
     @GetMapping("/managers/{managerId}/dashboard")
     @Transactional(readOnly = true)
-    public ManagerDashboardResponse managerDashboard(@PathVariable UUID managerId) {
+    public ManagerDashboardResponse managerDashboard(@PathVariable UUID managerId, Authentication authentication) {
+        UUID currentUserId = UUID.fromString(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && !currentUserId.equals(managerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès refusé");
+        }
+
         List<Trip> mTrips = tripService.getAllTripEntities().stream()
                 .filter(t -> managerId.equals(t.getManagerId()))
                 .toList();
