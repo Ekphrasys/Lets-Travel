@@ -47,6 +47,13 @@ spring:
               predicates:
                 - Path=/api/payments/**
 
+gateway:
+  rate-limit:
+    enabled: true
+    capacity: 40
+    refill-tokens: 20
+    refill-period-seconds: 1
+
 eureka:
   client:
     service-url:
