@@ -1,0 +1,108 @@
+<div class="page">
+
+  @if (loading()) {
+    <p class="loading">Chargement...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (profile(); as p) {
+
+    <div class="profile-header">
+      <div class="avatar">{{ p.firstName[0] }}{{ p.lastName[0] }}</div>
+      <div>
+        <h1>{{ p.firstName }} {{ p.lastName }}</h1>
+        <p class="badge">Voyageur</p>
+        @if (isOwnProfile) {
+          <p class="email">{{ p.email }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🧳</div>
+        <div class="stat-value">{{ p.totalParticipations }}</div>
+        <div class="stat-label">Voyages effectués</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value">{{ p.totalFeedbackGiven }}</div>
+        <div class="stat-label">Avis laissés</div>
+      </div>
+      <div class="stat-card" [class.warn]="p.totalReportsFiled > 0">
+        <div class="stat-icon">🚩</div>
+        <div class="stat-value">{{ p.totalReportsFiled }}</div>
+        <div class="stat-label">Signalements effectués</div>
+      </div>
+    </div>
+
+    <section class="list-section">
+      <h2>Participations passées</h2>
+
+      @if (p.participations.length === 0) {
+        <p class="empty">Aucune participation pour l'instant.</p>
+      } @else {
+        <div class="item-list">
+          @for (part of p.participations; track part.bookingId) {
+            <div class="item-row">
+              <div class="item-info">
+                <span class="item-title">{{ part.tripTitle }}</span>
+                <span class="item-detail">{{ part.originCity }} → {{ part.destinationCity }}</span>
+                <span class="item-detail">{{ part.departureDate | date:'mediumDate' }}</span>
+                <span class="item-price">{{ part.price | currency:'EUR' }}</span>
+              </div>
+              <span class="item-status" [class.active]="part.status === 'CONFIRMED'">{{ part.status }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="list-section">
+      <h2>Avis laissés</h2>
+
+      @if (p.feedbackGiven.length === 0) {
+        <p class="empty">Aucun avis laissé pour l'instant.</p>
+      } @else {
+        <div class="item-list">
+          @for (fb of p.feedbackGiven; track fb.feedbackId) {
+            <div class="item-row">
+              <div class="item-info">
+                <span class="item-title">{{ fb.tripTitle }}</span>
+                <span class="stars" [title]="fb.rating + '/5'">{{ stars(fb.rating) }}</span>
+                @if (fb.comment) {
+                  <span class="item-comment">"{{ fb.comment }}"</span>
+                }
+              </div>
+              <span class="item-date">{{ fb.createdAt | date:'mediumDate' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    @if (isOwnProfile) {
+      <section class="list-section">
+        <h2>Signalements effectués</h2>
+
+        @if (p.reportsMade.length === 0) {
+          <p class="empty">Aucun signalement effectué.</p>
+        } @else {
+          <div class="item-list">
+            @for (r of p.reportsMade; track r.reportId) {
+              <div class="report-row">
+                <div class="report-meta">
+                  <span class="target-type">{{ r.targetType === 'MANAGER' ? 'Manager' : 'Utilisateur' }}</span>
+                  <span class="report-target">{{ r.targetFirstName }} {{ r.targetLastName }}</span>
+                  <span class="report-date">{{ r.createdAt | date:'mediumDate' }}</span>
+                  <span class="report-status">{{ r.status }}</span>
+                </div>
+                <p class="report-reason">{{ r.reason }}</p>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+  }
+</div>

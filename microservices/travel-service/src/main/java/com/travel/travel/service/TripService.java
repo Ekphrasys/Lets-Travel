@@ -207,6 +207,7 @@ public class TripService {
         }
         tripRepository.deleteById(id);
         tripSearchService.removeTrip(id);
+        tripGraphService.deleteTrip(id);
     }
 
     public List<TripResponse> getSuggestions(UUID userId) {

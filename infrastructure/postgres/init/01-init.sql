@@ -175,8 +175,8 @@ VALUES
     ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'bob.manager@travel.com', '$2a$10$g6x9/Vsk8t5sC3uH8431eOnK24o82Wz/7l1c.3.d8vH0K5cuxQv4y');
 INSERT INTO "user".users (id, email, first_name, last_name, role)
 VALUES 
-    ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'alice.manager@travel.com', 'Alice', 'Manager', 'MANAGER'),
-    ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'bob.manager@travel.com', 'Bob', 'Manager', 'MANAGER');
+    ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'alice.manager@travel.com', 'Alice', 'Manager', 'TRAVEL_MANAGER'),
+    ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'bob.manager@travel.com', 'Bob', 'Manager', 'TRAVEL_MANAGER');
 
 -- Travelers
 INSERT INTO auth.users_auth (id, email, password_hash)

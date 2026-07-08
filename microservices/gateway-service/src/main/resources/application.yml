@@ -41,11 +41,18 @@ spring:
             - id: travel-service
               uri: lb://TRAVEL-SERVICE
               predicates:
-                - Path=/api/travels/**, /api/bookings/**, /api/feedbacks/**, /api/managers/**
+                - Path=/api/travels/**, /api/bookings/**, /api/feedbacks/**, /api/managers/**, /api/travelers/**
             - id: payment-service
               uri: lb://PAYMENT-SERVICE
               predicates:
                 - Path=/api/payments/**
+
+gateway:
+  rate-limit:
+    enabled: true
+    capacity: 40
+    refill-tokens: 20
+    refill-period-seconds: 1
 
 eureka:
   client:

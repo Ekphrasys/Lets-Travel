@@ -49,11 +49,7 @@ export class TripsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
-    if (this.auth.isAuthenticated()) {
-      this.tripService.suggestions().subscribe(s =>
-        this.suggestedTrips.set(s.filter(t => this.isBookable(t)))
-      );
-    }
+    this.loadSuggestions();
 
     this.searchControl.valueChanges.pipe(
       debounceTime(300),
@@ -86,6 +82,13 @@ export class TripsComponent implements OnInit, OnDestroy {
       this.allTrips.set(t);
       this.trips.set(t);
     });
+  }
+
+  private loadSuggestions(): void {
+    if (!this.auth.isAuthenticated()) return;
+    this.tripService.suggestions().subscribe(s =>
+      this.suggestedTrips.set(s.filter(t => this.isBookable(t)).slice(0, 3))
+    );
   }
 
   selectSuggestion(suggestion: string): void {
@@ -140,6 +143,7 @@ export class TripsComponent implements OnInit, OnDestroy {
           this.closePaymentModal();
           this.message.set('Réservation confirmée !');
           this.load();
+          this.loadSuggestions();
         } else {
           this.message.set('Paiement refusé. Veuillez réessayer.');
         }

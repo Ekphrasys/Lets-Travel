@@ -44,6 +44,12 @@ public class UserController {
         return userService.getById(id);
     }
 
+    @GetMapping("/internal/{id}/reports/filed")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public List<FiledReportView> reportsFiledByInternal(@PathVariable UUID id) {
+        return userService.findReportsFiledByInternal(id);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -145,11 +151,13 @@ public class UserController {
     }
 
     @GetMapping("/{id}/report-counts")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER') or #id.toString() == authentication.name")
     public ReportCountsResponse getReportCounts(@PathVariable UUID id) {
         return userService.getReportCounts(id);
     }
 
     @GetMapping("/{id}/stats")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TRAVEL_MANAGER') or #id.toString() == authentication.name")
     public UserStatsResponse getUserStats(@PathVariable UUID id) {
         return userService.getUserStats(id);
     }

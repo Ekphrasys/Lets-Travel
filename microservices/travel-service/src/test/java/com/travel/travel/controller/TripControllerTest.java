@@ -7,7 +7,7 @@ import com.travel.travel.dto.TripResponse;
 import com.travel.travel.service.RouteSearchService;
 import com.travel.travel.service.TripService;
 import com.travel.travel.search.TripSearchService;
-import com.travel.travel.service.Neo4jRecommendationService;
+import com.travel.travel.service.TripGraphService;
 import com.travel.travel.service.BookingService;
 import com.travel.travel.repository.FeedbackRepository;
 import com.travel.travel.repository.BookingRepository;
@@ -63,7 +63,7 @@ class TripControllerTest {
     private TripSearchService tripSearchService;
 
     @MockBean
-    private Neo4jRecommendationService neo4jRecommendationService;
+    private TripGraphService tripGraphService;
 
     @MockBean
     private BookingService bookingService;

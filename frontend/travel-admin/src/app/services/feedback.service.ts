@@ -17,6 +17,10 @@ export class FeedbackService {
     return this.http.get<Feedback[]>(`${this.base}/trip/${tripId}`);
   }
 
+  myFeedbacks(): Observable<Feedback[]> {
+    return this.http.get<Feedback[]>(`${this.base}/my`);
+  }
+
   myTripsFeedback(): Observable<Feedback[]> {
     return this.http.get<Feedback[]>(`${this.base}/my-trips`);
   }

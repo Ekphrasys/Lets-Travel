@@ -38,6 +38,11 @@ export class BookingsComponent implements OnInit {
     this.loadingPayments.set(true);
     this.bookingService.myBookings().subscribe((b: Booking[]) => {
       this.bookings.set(b);
+      this.feedbackService.myFeedbacks().subscribe(feedbacks => {
+        const reviewedTripIds = new Set(feedbacks.map(f => f.tripId));
+        const reviewedBookingIds = b.filter(booking => reviewedTripIds.has(booking.tripId)).map(booking => booking.id);
+        this.submittedBookingIds.set(new Set(reviewedBookingIds));
+      });
       const promises: Promise<void>[] = [];
       b.forEach(booking => {
         if (booking.paymentId) {

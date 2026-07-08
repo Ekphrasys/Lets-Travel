@@ -6,6 +6,7 @@ import com.travel.payment.repository.PaymentEventRepository;
 import com.travel.payment.repository.PaymentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -25,6 +26,7 @@ public class PaymentWebhookController {
     }
 
     @PostMapping("/{provider}/simulate")
+    @PreAuthorize("hasRole('INTERNAL')")
     public ResponseEntity<?> simulate(
             @PathVariable String provider,
             @RequestBody Map<String, String> body) {

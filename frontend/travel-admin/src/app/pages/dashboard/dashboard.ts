@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { TripService } from '../../services/trip.service';
 import { BookingService } from '../../services/booking.service';
 import { AdminService } from '../../services/admin.service';
+import { FeedbackService } from '../../services/feedback.service';
 import { AdminReportView, Trip, Booking, User } from '../../models/travel.models';
 
 @Component({
@@ -19,6 +20,7 @@ export class DashboardComponent implements OnInit {
   tripService = inject(TripService);
   bookingService = inject(BookingService);
   adminService = inject(AdminService);
+  feedbackService = inject(FeedbackService);
 
   // Common data
   trips = signal<Trip[]>([]);
@@ -31,6 +33,7 @@ export class DashboardComponent implements OnInit {
   recommendations = signal<Trip[]>([]);
   managers = signal<User[]>([]);
   reportCounts = signal({ reportsFiled: 0, reportsReceived: 0 });
+  reviewedTripIds = signal<Set<string>>(new Set());
   
   // Modals / Actions
   showFeedbackModal = false;
@@ -88,9 +91,16 @@ export class DashboardComponent implements OnInit {
   // --- Traveler Logic ---
   loadTravelerData(userId: string): void {
     this.bookingService.myBookings().subscribe((b: Booking[]) => this.bookings.set(b));
-    this.tripService.recommendations().subscribe((r: Trip[]) => this.recommendations.set(r));
+    this.tripService.recommendations().subscribe((r: Trip[]) => this.recommendations.set(r.slice(0, 3)));
     this.adminService.listManagers().subscribe((m: User[]) => this.managers.set(m));
     this.adminService.getReportCounts(userId).subscribe((c: { reportsFiled: number; reportsReceived: number }) => this.reportCounts.set(c));
+    this.feedbackService.myFeedbacks().subscribe(feedbacks => {
+      this.reviewedTripIds.set(new Set(feedbacks.map(f => f.tripId)));
+    });
+  }
+
+  hasReviewed(tripId: string): boolean {
+    return this.reviewedTripIds().has(tripId);
   }
 
   onSearchChange(): void {

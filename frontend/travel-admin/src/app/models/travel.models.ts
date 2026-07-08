@@ -1,7 +1,7 @@
 export interface AuthResponse {
   token: string;
   userId: string;
-  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'MANAGER' | 'TRAVELER';
+  role: 'USER' | 'TRAVEL_MANAGER' | 'ADMIN' | 'TRAVELER';
 }
 
 export interface Trip {
@@ -195,4 +195,50 @@ export interface ReportDetail {
   reporterLastName: string;
   reason: string;
   createdAt: string;
+}
+
+export interface TravelerParticipation {
+  bookingId: string;
+  tripId: string;
+  tripTitle: string;
+  originCity: string;
+  destinationCity: string;
+  departureDate: string;
+  price: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface TravelerFeedbackGiven {
+  feedbackId: string;
+  tripId: string;
+  tripTitle: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export interface TravelerReportMade {
+  reportId: string;
+  targetType: 'MANAGER' | 'USER';
+  targetId: string;
+  targetFirstName: string;
+  targetLastName: string;
+  tripId?: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface TravelerProfile {
+  travelerId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  totalParticipations: number;
+  totalFeedbackGiven: number;
+  totalReportsFiled: number;
+  participations: TravelerParticipation[];
+  feedbackGiven: TravelerFeedbackGiven[];
+  reportsMade: TravelerReportMade[];
 }

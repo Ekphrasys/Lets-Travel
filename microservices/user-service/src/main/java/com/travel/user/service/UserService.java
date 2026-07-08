@@ -146,7 +146,7 @@ public class UserService {
 
         try {
             entityManager.createNativeQuery(
-                    "UPDATE user.reports SET reporter_id = NULL WHERE reporter_id = :userId"
+                    "UPDATE \"user\".reports SET reporter_id = NULL WHERE reporter_id = :userId"
             ).setParameter("userId", userId).executeUpdate();
         } catch (Exception e) {
         }
@@ -166,7 +166,7 @@ public class UserService {
 
     public List<UserResponse> findManagers() {
         return userRepository.findAll().stream()
-                .filter(u -> "MANAGER".equalsIgnoreCase(u.getRole()))
+                .filter(u -> "TRAVEL_MANAGER".equalsIgnoreCase(u.getRole()))
                 .map(this::toResponse)
                 .toList();
     }
@@ -226,6 +226,25 @@ public class UserService {
         long filed = reportRepository.countByReporterId(userId);
         long received = reportRepository.countByReportedId(userId);
         return new ReportCountsResponse(filed, received);
+    }
+
+    public List<FiledReportView> findReportsFiledByInternal(UUID reporterId) {
+        return reportRepository.findByReporterId(reporterId).stream()
+                .sorted(java.util.Comparator.comparing(Report::getCreatedAt).reversed())
+                .map(report -> {
+                    User reported = userRepository.findById(report.getReportedId()).orElse(null);
+                    return new FiledReportView(
+                            report.getId(),
+                            report.getReportedId(),
+                            reported != null ? reported.getFirstName() : "Inconnu",
+                            reported != null ? reported.getLastName() : "",
+                            report.getTripId(),
+                            report.getReason(),
+                            report.getStatus(),
+                            report.getCreatedAt()
+                    );
+                })
+                .toList();
     }
 
     @Transactional(readOnly = true)
