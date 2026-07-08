@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -46,6 +48,31 @@ public class UserServiceClient {
                     .block();
         } catch (WebClientResponseException.NotFound e) {
             return null;
+        }
+    }
+
+    public record FiledReportView(
+            UUID id,
+            UUID reportedId,
+            String reportedFirstName,
+            String reportedLastName,
+            UUID tripId,
+            String reason,
+            String status,
+            Instant createdAt
+    ) {}
+
+    public List<FiledReportView> getFiledReports(UUID userId) {
+        try {
+            return webClient.get()
+                    .uri("/api/users/internal/{id}/reports/filed", userId)
+                    .header("X-Internal-Key", internalApiKey)
+                    .retrieve()
+                    .bodyToFlux(FiledReportView.class)
+                    .collectList()
+                    .block();
+        } catch (WebClientResponseException.NotFound e) {
+            return List.of();
         }
     }
 }

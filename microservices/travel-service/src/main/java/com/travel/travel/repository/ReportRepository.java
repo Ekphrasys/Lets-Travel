@@ -14,5 +14,7 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
 
     List<Report> findByManagerIdOrderByCreatedAtDesc(UUID managerId);
 
+    List<Report> findByReporterIdOrderByCreatedAtDesc(UUID reporterId);
+
     List<Report> findAllByOrderByCreatedAtDesc();
 }

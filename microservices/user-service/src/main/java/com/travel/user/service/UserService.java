@@ -228,6 +228,25 @@ public class UserService {
         return new ReportCountsResponse(filed, received);
     }
 
+    public List<FiledReportView> findReportsFiledByInternal(UUID reporterId) {
+        return reportRepository.findByReporterId(reporterId).stream()
+                .sorted(java.util.Comparator.comparing(Report::getCreatedAt).reversed())
+                .map(report -> {
+                    User reported = userRepository.findById(report.getReportedId()).orElse(null);
+                    return new FiledReportView(
+                            report.getId(),
+                            report.getReportedId(),
+                            reported != null ? reported.getFirstName() : "Inconnu",
+                            reported != null ? reported.getLastName() : "",
+                            report.getTripId(),
+                            report.getReason(),
+                            report.getStatus(),
+                            report.getCreatedAt()
+                    );
+                })
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public UserStatsResponse getUserStats(UUID userId) {
         if (!userRepository.existsById(userId)) {

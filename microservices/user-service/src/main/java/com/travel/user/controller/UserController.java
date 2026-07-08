@@ -44,6 +44,12 @@ public class UserController {
         return userService.getById(id);
     }
 
+    @GetMapping("/internal/{id}/reports/filed")
+    @PreAuthorize("hasRole('INTERNAL')")
+    public List<FiledReportView> reportsFiledByInternal(@PathVariable UUID id) {
+        return userService.findReportsFiledByInternal(id);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
